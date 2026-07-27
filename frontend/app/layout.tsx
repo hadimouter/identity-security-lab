@@ -4,6 +4,9 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { login, logout } from "@/app/actions";
+import { SubmitButton } from "@/app/components/submit-button";
+import { screensFor } from "@/lib/rbac";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,28 +25,34 @@ export const metadata: Metadata = {
     "Lab IAM : SSO OpenID Connect, RBAC, demandes d'accès et audit logs",
 };
 
-const buttonStyle =
+const BUTTON =
   "rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium " +
   "transition-colors hover:border-foreground/30 hover:bg-foreground/5";
 
 async function Header() {
   const session = await auth();
 
+  // Seuls les écrans déjà implémentés sont proposés dans la barre.
+  const available = session
+    ? screensFor(session.roles).filter((s) => s.status === "disponible")
+    : [];
+
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-3xl items-center gap-6 px-6">
+      <nav className="mx-auto flex h-16 max-w-3xl items-center gap-5 px-6">
         <Link href="/" className="text-sm font-semibold tracking-tight">
           Identity Security Lab
         </Link>
 
-        {session && (
+        {available.map((screen) => (
           <Link
-            href="/profile"
+            key={screen.href}
+            href={screen.href}
             className="text-sm text-muted transition-colors hover:text-foreground"
           >
-            Profil
+            {screen.label === "Profil et claims" ? "Profil" : screen.label}
           </Link>
-        )}
+        ))}
 
         <div className="ml-auto flex items-center gap-4">
           {session ? (
@@ -52,12 +61,16 @@ async function Header() {
                 {session.user?.email}
               </span>
               <form action={logout}>
-                <button className={buttonStyle}>Se déconnecter</button>
+                <SubmitButton pendingLabel="Déconnexion…" className={BUTTON}>
+                  Se déconnecter
+                </SubmitButton>
               </form>
             </>
           ) : (
             <form action={login}>
-              <button className={buttonStyle}>Se connecter</button>
+              <SubmitButton pendingLabel="Redirection…" className={BUTTON}>
+                Se connecter
+              </SubmitButton>
             </form>
           )}
         </div>

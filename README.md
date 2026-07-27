@@ -200,7 +200,10 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 ## Fonctionnalités
 
 - Authentification SSO via Keycloak, en Authorization Code + PKCE
-- Profil utilisateur et claims décodés
+- Profil utilisateur, claims décodés et compte à rebours d'expiration du jeton
+- Tableau de bord annonçant ce que le rôle permet et les écrans à venir
+- Pages 401, 403 et 404 en français, avec les bons statuts HTTP
+- Page d'erreur d'authentification expliquant chaque cas d'échec
 - RBAC appliqué côté serveur, avec validation JWT via JWKS
 - Demande d'accès justifiée
 - File d'approbation pour les managers
@@ -259,6 +262,8 @@ docs/resources.md                standards et ressources
 - Permissions grossières : trois rôles, sans permissions atomiques.
 - Keycloak tourne en mode développement, sans TLS ni durcissement. Le realm est en `sslRequired: none`, ce qui n'est acceptable qu'en local.
 - Auth.js v5 est encore en version bêta. C'est la version prévue pour l'App Router, mais son API peut changer.
+- Les pages 401 et 403 reposent sur `forbidden()` et `unauthorized()`, activés par le drapeau expérimental `authInterrupts` de Next.js. Ce sont les seules API qui rendent le bon statut HTTP, mais leur forme peut évoluer.
+- Le contrôle de rôle sur `/admin` est appliqué au rendu de la page, donc côté serveur, mais il ne protège que l'affichage. L'autorisation qui fait autorité passe dans l'API en phase 3.
 - Le frontend ne rafraîchit pas l'access token à son expiration, au bout de 5 minutes. Suffisant pour une démonstration, à traiter avant tout usage prolongé.
 - Pas de déploiement, le lab tourne en local uniquement.
 - Pas de tests automatisés dans le périmètre du MVP.

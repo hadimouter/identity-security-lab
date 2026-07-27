@@ -20,6 +20,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 
+  pages: {
+    // Remplace la page d'erreur par défaut d'Auth.js, en anglais et
+    // hors charte, qui affiche « Check the server logs ».
+    error: "/auth/error",
+  },
+
   callbacks: {
     /**
      * Appelé à chaque lecture de session. `account` n'est présent qu'au
@@ -45,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      */
     async session({ session, token }) {
       session.accessToken = token.accessToken;
+      session.expiresAt = token.expiresAt;
       session.roles = token.roles ?? [];
       session.claims = token.claims ?? null;
       return session;

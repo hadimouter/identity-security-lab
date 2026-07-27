@@ -8,6 +8,8 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     /** Jeton envoyé à l'API Express. Ne quitte jamais le serveur. */
     accessToken?: string;
+    /** Expiration de l'access token, en secondes depuis l'époque Unix. */
+    expiresAt?: number;
     /** Rôles métier extraits du token : user, manager, admin. */
     roles: string[];
     /** Claims décodés, affichés à titre pédagogique sur /profile. */

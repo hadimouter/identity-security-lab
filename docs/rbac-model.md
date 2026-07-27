@@ -16,7 +16,9 @@ Rôle métier. Valide ou refuse les demandes d'accès, révoque des accès.
 
 Rôle à privilèges. Administration de l'application et consultation de toutes les données. Traité comme un accès sensible.
 
-Les rôles sont cumulables : un admin peut aussi porter manager. Il n'y a pas de hiérarchie implicite, `admin` n'hérite pas automatiquement de `manager`. Chaque contrôle est explicite.
+Les rôles sont cumulables : un utilisateur peut porter `manager` et `admin` à la fois.
+
+En pratique, `manager` dispose aussi des droits `user`, et `admin` des droits `manager`. Cette portée élargie vient d'une **énumération explicite dans la matrice**, pas d'un mécanisme d'héritage : chaque endpoint liste les rôles qu'il accepte, et `admin` y figure nommément. Aucun contrôle ne repose sur une hiérarchie implicite qu'il faudrait deviner.
 
 ## Deux sources de droits
 

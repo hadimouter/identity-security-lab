@@ -1,6 +1,7 @@
-import { redirect } from "next/navigation";
+import { unauthorized } from "next/navigation";
 
 import { auth } from "@/auth";
+import { TokenCountdown } from "@/app/components/token-countdown";
 
 /**
  * Habillage des rôles.
@@ -26,16 +27,16 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
 /**
  * Page profil.
  *
- * La redirection ci-dessous est un confort de navigation, pas une mesure de
- * sécurité : elle évite d'afficher une page vide, rien de plus. Le contrôle
- * qui fait autorité sera appliqué par l'API Express, qui vérifie le jeton et
- * les rôles à chaque requête (phase 3).
+ * unauthorized() rend une page 401 avec le bon statut HTTP, plutôt qu'une
+ * redirection silencieuse. C'est du confort de navigation, pas une mesure
+ * de sécurité : le contrôle qui fait autorité sera appliqué par l'API
+ * Express, qui vérifie le jeton et les rôles à chaque requête (phase 3).
  */
 export default async function ProfilePage() {
   const session = await auth();
 
   if (!session) {
-    redirect("/");
+    unauthorized();
   }
 
   const claims = session.claims ?? {};
@@ -95,6 +96,24 @@ export default async function ProfilePage() {
           accès à privilèges.
         </p>
       </section>
+
+      {session.expiresAt && (
+        <section className="space-y-3">
+          <h2 className="text-sm font-semibold tracking-tight">
+            Durée de vie du jeton
+          </h2>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-lg border border-border bg-surface px-5 py-4 text-sm">
+            <span className="text-muted">Expire dans</span>
+            <TokenCountdown expiresAt={session.expiresAt} />
+          </div>
+          <p className="text-xs text-muted">
+            Un access token est volontairement de courte durée, 5 minutes ici.
+            Passé ce délai il n&apos;est plus accepté, alors que la session de
+            l&apos;application reste ouverte. C&apos;est la raison pour laquelle
+            les droits ne peuvent pas être décidés à partir du seul jeton.
+          </p>
+        </section>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold tracking-tight">

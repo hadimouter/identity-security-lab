@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { login } from "@/app/actions";
+import { SubmitButton } from "@/app/components/submit-button";
+import { ROLE_CAPABILITIES, ROLE_LABELS, isRole, screensFor } from "@/lib/rbac";
 
 const DEMO_ACCOUNTS = [
   { email: "user@example.com", role: "user", can: "Demander un accès" },
@@ -9,9 +11,8 @@ const DEMO_ACCOUNTS = [
   { email: "admin@example.com", role: "admin", can: "Administration" },
 ];
 
-export default async function HomePage() {
-  const session = await auth();
-
+/** Vue publique : présentation du lab et invitation à se connecter. */
+function PublicHome() {
   return (
     <div className="space-y-12">
       <section className="space-y-4">
@@ -23,25 +24,14 @@ export default async function HomePage() {
           rôles, un workflow de demande d&apos;accès avec validation manager, la
           révocation et les audit logs.
         </p>
-
-        {session ? (
-          <p className="text-sm">
-            Connecté en tant que{" "}
-            <span className="font-mono">{session.user?.email}</span>.{" "}
-            <Link
-              href="/profile"
-              className="text-accent underline-offset-4 hover:underline"
-            >
-              Voir le profil et les claims
-            </Link>
-          </p>
-        ) : (
-          <form action={login} className="pt-2">
-            <button className="rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90">
-              Se connecter avec Keycloak
-            </button>
-          </form>
-        )}
+        <form action={login} className="pt-2">
+          <SubmitButton
+            pendingLabel="Redirection vers Keycloak…"
+            className="rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+          >
+            Se connecter avec Keycloak
+          </SubmitButton>
+        </form>
       </section>
 
       <section className="space-y-3">
@@ -85,4 +75,98 @@ export default async function HomePage() {
       </section>
     </div>
   );
+}
+
+/** Vue connectée : ce que le rôle permet, et où aller ensuite. */
+async function Dashboard() {
+  const session = await auth();
+  if (!session) return null;
+
+  const roles = session.roles.filter(isRole);
+  const screens = screensFor(session.roles);
+  // Dédoublonné : les listes se recouvrent quand un compte cumule des rôles.
+  const capabilities = [
+    ...new Set(roles.flatMap((role) => ROLE_CAPABILITIES[role])),
+  ];
+
+  return (
+    <div className="space-y-12">
+      <section className="space-y-3">
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Bonjour {session.user?.name?.split(" ")[0] ?? ""}
+        </h1>
+        <p className="text-muted">
+          Vous êtes connecté avec le rôle{" "}
+          {roles.length > 0 ? (
+            roles.map((role) => (
+              <span key={role} className="font-medium text-foreground">
+                {ROLE_LABELS[role]}
+              </span>
+            ))
+          ) : (
+            <span className="font-medium text-foreground">sans rôle métier</span>
+          )}
+          .
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold tracking-tight">
+          Ce que votre rôle permet
+        </h2>
+        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+          {capabilities.map((capability) => (
+            <li key={capability} className="px-5 py-3 text-sm">
+              {capability}
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-muted">
+          Défini par la matrice de{" "}
+          <span className="font-mono">docs/rbac-model.md</span>. Un accès
+          supplémentaire doit être demandé, justifié et approuvé.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold tracking-tight">Vos écrans</h2>
+        <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+          {screens.map((screen) => (
+            <li
+              key={screen.href}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3.5 text-sm"
+            >
+              {screen.status === "disponible" ? (
+                <Link
+                  href={screen.href}
+                  className="font-medium text-accent underline-offset-4 hover:underline"
+                >
+                  {screen.label}
+                </Link>
+              ) : (
+                <span className="text-muted">{screen.label}</span>
+              )}
+              <span className="font-mono text-xs text-muted">
+                {screen.href}
+              </span>
+              <span className="ml-auto text-xs text-muted">
+                {screen.status === "disponible"
+                  ? "disponible"
+                  : `à venir — ${screen.phase}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-xs text-muted">
+          Les écrans à venir sont annoncés pour rendre lisible le périmètre
+          complet du lab, tel que décrit dans le PRD.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+export default async function HomePage() {
+  const session = await auth();
+  return session ? <Dashboard /> : <PublicHome />;
 }
