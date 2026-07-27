@@ -18,40 +18,46 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Identity Security Lab",
-  description: "Lab IAM : SSO OpenID Connect, RBAC, demandes d'accès et audit logs",
+  description:
+    "Lab IAM : SSO OpenID Connect, RBAC, demandes d'accès et audit logs",
 };
+
+const buttonStyle =
+  "rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium " +
+  "transition-colors hover:border-foreground/30 hover:bg-foreground/5";
 
 async function Header() {
   const session = await auth();
 
   return (
-    <header className="border-b border-black/10 dark:border-white/15">
-      <nav className="mx-auto flex max-w-3xl items-center gap-4 px-6 py-4 text-sm">
-        <Link href="/" className="font-semibold">
+    <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
+      <nav className="mx-auto flex h-16 max-w-3xl items-center gap-6 px-6">
+        <Link href="/" className="text-sm font-semibold tracking-tight">
           Identity Security Lab
         </Link>
 
         {session && (
-          <Link href="/profile" className="opacity-70 hover:opacity-100">
+          <Link
+            href="/profile"
+            className="text-sm text-muted transition-colors hover:text-foreground"
+          >
             Profil
           </Link>
         )}
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-4">
           {session ? (
             <>
-              <span className="opacity-60">{session.user?.email}</span>
+              <span className="hidden text-sm text-muted sm:inline">
+                {session.user?.email}
+              </span>
               <form action={logout}>
-                <button className="rounded border border-black/20 px-3 py-1 hover:bg-black/5 dark:border-white/25 dark:hover:bg-white/10">
-                  Se déconnecter
-                </button>
+                <button className={buttonStyle}>Se déconnecter</button>
               </form>
             </>
           ) : (
             <form action={login}>
-              <button className="rounded border border-black/20 px-3 py-1 hover:bg-black/5 dark:border-white/25 dark:hover:bg-white/10">
-                Se connecter
-              </button>
+              <button className={buttonStyle}>Se connecter</button>
             </form>
           )}
         </div>
@@ -72,9 +78,15 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <Header />
-        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
+        <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
           {children}
         </main>
+        <footer className="border-t border-border">
+          <div className="mx-auto max-w-3xl px-6 py-6 text-xs text-muted">
+            Lab d&apos;apprentissage. Comptes et données de démonstration
+            uniquement.
+          </div>
+        </footer>
       </body>
     </html>
   );

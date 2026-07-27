@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
+/*
+ * Jeu de couleurs minimal, décliné en clair et en sombre.
+ * Volontairement neutre : l'intérêt du lab est le flux IAM, pas l'habillage.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --background: #f7f7f6;
+  --surface: #ffffff;
+  --foreground: #18181b;
+  --muted: #6b7280;
+  --border: #e4e4e7;
+  --accent: #2563eb;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0b0b0d;
+    --surface: #141417;
     --foreground: #ededed;
+    --muted: #9ca3af;
+    --border: #26262b;
+    --accent: #60a5fa;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /*
+   * Utilise les polices chargées dans layout.tsx.
+   * Le template de create-next-app forçait Arial ici, ce qui rendait
+   * inopérant le chargement des polices.
+   */
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
