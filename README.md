@@ -18,15 +18,15 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 ## Statut
 
 - Phase 1, fondation documentaire : terminée
-- Phase 2, Keycloak et authentification : infrastructure et realm en place, application à venir
+- Phase 2, Keycloak et authentification : infrastructure, realm et frontend en place, API à venir
 - Phase 3, RBAC : à faire
 - Phase 4, workflow de demande d'accès : à faire
 - Phase 5, accès et révocation : à faire
 - Phase 6, finalisation : à faire
 
-Ce qui fonctionne aujourd'hui : `docker compose up -d` démarre PostgreSQL et Keycloak, crée les deux bases du lab et importe le realm `identity-lab` avec ses rôles, ses clients et ses trois comptes de démonstration. On peut déjà obtenir un access token et lire ses claims.
+Ce qui fonctionne aujourd'hui : l'infrastructure démarre en une commande, le realm est importé automatiquement, et le frontend permet de se connecter via Keycloak, de consulter son profil et ses claims, puis de se déconnecter — session applicative et session SSO comprises.
 
-Ce qui n'existe pas encore : le frontend et l'API.
+Ce qui n'existe pas encore : l'API Express, le RBAC serveur et le workflow de demande d'accès.
 
 ## Architecture
 
@@ -66,6 +66,12 @@ cd identity-security-lab
 cp .env.example .env
 ```
 
+Générer un secret de session réel, la valeur par défaut est un texte indicatif :
+
+```bash
+sed -i '' "s|^AUTH_SECRET=.*|AUTH_SECRET=$(openssl rand -base64 32)|" .env
+```
+
 ### 2. Démarrer l'infrastructure
 
 ```bash
@@ -100,13 +106,25 @@ Console d'administration : http://localhost:8080
 
 Le détail des vérifications et le dépannage sont dans [docs/keycloak-setup.md](docs/keycloak-setup.md).
 
-### 4. Lancer l'API et le frontend
-
-Pas encore disponible. `backend/` et `frontend/` seront créés en phase 2.
+### 4. Lancer le frontend
 
 ```bash
-cd backend  && npm install && npx prisma migrate dev && npm run dev
-cd frontend && npm install && npm run dev
+cd frontend
+npm install
+ln -sfn ../.env .env.local
+npm run dev
+```
+
+Application sur http://localhost:3000
+
+Next.js ne lit ses variables d'environnement que depuis son propre dossier. Le lien `.env.local` évite de dupliquer le fichier : il n'y a qu'un seul `.env`, à la racine.
+
+### 5. Lancer l'API
+
+Pas encore disponible. `backend/` est créé en phase 2.
+
+```bash
+cd backend && npm install && npx prisma migrate dev && npm run dev
 ```
 
 ## Configuration Keycloak
@@ -239,7 +257,9 @@ docs/resources.md                standards et ressources
 - Pas d'accès temporaire, les accès accordés n'expirent pas automatiquement.
 - Pas de campagne de revue d'accès ni de recertification.
 - Permissions grossières : trois rôles, sans permissions atomiques.
-- Keycloak tourne en mode développement, sans TLS ni durcissement.
+- Keycloak tourne en mode développement, sans TLS ni durcissement. Le realm est en `sslRequired: none`, ce qui n'est acceptable qu'en local.
+- Auth.js v5 est encore en version bêta. C'est la version prévue pour l'App Router, mais son API peut changer.
+- Le frontend ne rafraîchit pas l'access token à son expiration, au bout de 5 minutes. Suffisant pour une démonstration, à traiter avant tout usage prolongé.
 - Pas de déploiement, le lab tourne en local uniquement.
 - Pas de tests automatisés dans le périmètre du MVP.
 
