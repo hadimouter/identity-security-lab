@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { login, logout } from "@/app/actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { screensFor } from "@/lib/rbac";
+import { NAV_LINK, SECONDARY_BUTTON } from "@/lib/ui";
 
 import "./globals.css";
 
@@ -25,10 +26,6 @@ export const metadata: Metadata = {
     "Lab IAM : SSO OpenID Connect, RBAC, demandes d'accès et audit logs",
 };
 
-const BUTTON =
-  "rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium " +
-  "transition-colors hover:border-foreground/30 hover:bg-foreground/5";
-
 async function Header() {
   const session = await auth();
 
@@ -40,16 +37,15 @@ async function Header() {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
       <nav className="mx-auto flex h-16 max-w-3xl items-center gap-5 px-6">
-        <Link href="/" className="text-sm font-semibold tracking-tight">
+        <Link
+          href="/"
+          className="-mx-1 rounded px-1 py-2 text-sm font-semibold tracking-tight transition-opacity hover:opacity-70"
+        >
           Identity Security Lab
         </Link>
 
         {available.map((screen) => (
-          <Link
-            key={screen.href}
-            href={screen.href}
-            className="text-sm text-muted transition-colors hover:text-foreground"
-          >
+          <Link key={screen.href} href={screen.href} className={NAV_LINK}>
             {screen.label === "Profil et claims" ? "Profil" : screen.label}
           </Link>
         ))}
@@ -61,14 +57,20 @@ async function Header() {
                 {session.user?.email}
               </span>
               <form action={logout}>
-                <SubmitButton pendingLabel="Déconnexion…" className={BUTTON}>
+                <SubmitButton
+                  pendingLabel="Déconnexion…"
+                  className={SECONDARY_BUTTON}
+                >
                   Se déconnecter
                 </SubmitButton>
               </form>
             </>
           ) : (
             <form action={login}>
-              <SubmitButton pendingLabel="Redirection…" className={BUTTON}>
+              <SubmitButton
+                pendingLabel="Redirection…"
+                className={SECONDARY_BUTTON}
+              >
                 Se connecter
               </SubmitButton>
             </form>
@@ -95,7 +97,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="border-t border-border">
-          <div className="mx-auto max-w-3xl px-6 py-6 text-xs text-muted">
+          <div className="mx-auto max-w-3xl px-6 py-6 text-center text-xs text-muted">
             Lab d&apos;apprentissage. Comptes et données de démonstration
             uniquement.
           </div>

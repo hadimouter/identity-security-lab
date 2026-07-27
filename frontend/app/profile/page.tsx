@@ -10,12 +10,21 @@ import { TokenCountdown } from "@/app/components/token-countdown";
  * visuellement. Le code couleur porte une information, il n'est pas décoratif.
  */
 const ROLE_STYLES: Record<string, string> = {
-  admin: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  admin:
+    "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
   manager: "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400",
   user: "border-border bg-foreground/5 text-muted",
 };
 
-function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+function Field({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
   return (
     <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3.5">
       <dt className="w-40 shrink-0 text-sm text-muted">{label}</dt>
@@ -90,9 +99,9 @@ export default async function ProfilePage() {
           )}
         </div>
         <p className="text-xs text-muted">
-          Extraits de <span className="font-mono">realm_access.roles</span>{" "}
-          de l&apos;access token. Les rôles techniques de Keycloak sont filtrés.
-          Le rôle <span className="font-mono">admin</span> est distingué comme
+          Extraits de <span className="font-mono">realm_access.roles</span> de
+          l&apos;access token. Les rôles techniques de Keycloak sont filtrés. Le
+          rôle <span className="font-mono">admin</span> est distingué comme
           accès à privilèges.
         </p>
       </section>

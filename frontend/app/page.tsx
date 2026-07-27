@@ -4,10 +4,15 @@ import { auth } from "@/auth";
 import { login } from "@/app/actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ROLE_CAPABILITIES, ROLE_LABELS, isRole, screensFor } from "@/lib/rbac";
+import { PRIMARY_BUTTON } from "@/lib/ui";
 
 const DEMO_ACCOUNTS = [
   { email: "user@example.com", role: "user", can: "Demander un accès" },
-  { email: "manager@example.com", role: "manager", can: "Approuver ou refuser" },
+  {
+    email: "manager@example.com",
+    role: "manager",
+    can: "Approuver ou refuser",
+  },
   { email: "admin@example.com", role: "admin", can: "Administration" },
 ];
 
@@ -27,7 +32,7 @@ function PublicHome() {
         <form action={login} className="pt-2">
           <SubmitButton
             pendingLabel="Redirection vers Keycloak…"
-            className="rounded-md bg-foreground px-5 py-2.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            className={`${PRIMARY_BUTTON} px-5 py-2.5`}
           >
             Se connecter avec Keycloak
           </SubmitButton>
@@ -104,7 +109,9 @@ async function Dashboard() {
               </span>
             ))
           ) : (
-            <span className="font-medium text-foreground">sans rôle métier</span>
+            <span className="font-medium text-foreground">
+              sans rôle métier
+            </span>
           )}
           .
         </p>
@@ -131,31 +138,49 @@ async function Dashboard() {
       <section className="space-y-3">
         <h2 className="text-sm font-semibold tracking-tight">Vos écrans</h2>
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-          {screens.map((screen) => (
-            <li
-              key={screen.href}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3.5 text-sm"
-            >
-              {screen.status === "disponible" ? (
-                <Link
-                  href={screen.href}
-                  className="font-medium text-accent underline-offset-4 hover:underline"
+          {screens.map((screen) => {
+            const row = (
+              <>
+                <span
+                  className={
+                    screen.status === "disponible"
+                      ? "font-medium text-accent"
+                      : "text-muted"
+                  }
                 >
                   {screen.label}
-                </Link>
-              ) : (
-                <span className="text-muted">{screen.label}</span>
-              )}
-              <span className="font-mono text-xs text-muted">
-                {screen.href}
-              </span>
-              <span className="ml-auto text-xs text-muted">
-                {screen.status === "disponible"
-                  ? "disponible"
-                  : `à venir — ${screen.phase}`}
-              </span>
-            </li>
-          ))}
+                </span>
+                <span className="font-mono text-xs text-muted">
+                  {screen.href}
+                </span>
+                <span className="ml-auto text-xs text-muted">
+                  {screen.status === "disponible"
+                    ? "disponible"
+                    : `à venir — ${screen.phase}`}
+                </span>
+              </>
+            );
+
+            const rowClass =
+              "flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3.5 text-sm";
+
+            return (
+              <li key={screen.href}>
+                {screen.status === "disponible" ? (
+                  // Toute la ligne est cliquable : cible plus large qu'un
+                  // lien de 20px, et l'affordance est plus lisible.
+                  <Link
+                    href={screen.href}
+                    className={`${rowClass} transition-colors hover:bg-foreground/5`}
+                  >
+                    {row}
+                  </Link>
+                ) : (
+                  <div className={rowClass}>{row}</div>
+                )}
+              </li>
+            );
+          })}
         </ul>
         <p className="text-xs text-muted">
           Les écrans à venir sont annoncés pour rendre lisible le périmètre

@@ -69,7 +69,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
      */
     async signOut(message) {
       const idToken =
-        "token" in message ? (message.token?.idToken as string | undefined) : undefined;
+        "token" in message
+          ? (message.token?.idToken as string | undefined)
+          : undefined;
 
       if (!idToken || !process.env.KEYCLOAK_ISSUER) return;
 

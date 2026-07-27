@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { SECONDARY_BUTTON } from "@/lib/ui";
+
 type Props = {
   code: string;
   title: string;
@@ -13,7 +15,13 @@ type Props = {
  * la page d'erreur d'authentification. Évite d'avoir quatre mises en page
  * différentes pour dire la même chose.
  */
-export function MessageScreen({ code, title, description, hint, action }: Props) {
+export function MessageScreen({
+  code,
+  title,
+  description,
+  hint,
+  action,
+}: Props) {
   return (
     <div className="mx-auto max-w-lg space-y-6 py-12 text-center">
       <p className="font-mono text-sm text-muted">{code}</p>
@@ -31,10 +39,7 @@ export function MessageScreen({ code, title, description, hint, action }: Props)
 
       <div className="flex items-center justify-center gap-3 pt-2">
         {action}
-        <Link
-          href="/"
-          className="rounded-md border border-border bg-surface px-3 py-1.5 text-sm font-medium transition-colors hover:border-foreground/30 hover:bg-foreground/5"
-        >
+        <Link href="/" className={SECONDARY_BUTTON}>
           Retour à l&apos;accueil
         </Link>
       </div>

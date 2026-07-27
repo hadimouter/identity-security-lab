@@ -31,7 +31,9 @@ export default async function AdminPage() {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Administration</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Administration
+        </h1>
         <p className="text-muted">
           Écran réservé au rôle <span className="font-mono">admin</span>.
         </p>

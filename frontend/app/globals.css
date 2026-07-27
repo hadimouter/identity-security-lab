@@ -45,6 +45,18 @@
   border-radius: 4px;
 }
 
+/*
+ * Curseur sur les éléments cliquables.
+ * Le preflight de Tailwind v4 met cursor: default sur les <button>,
+ * contrairement à la v3. Sans cette règle, aucun bouton n'indique
+ * qu'il est cliquable. Les <a href> gardent le curseur du navigateur.
+ */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

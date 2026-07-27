@@ -14,7 +14,11 @@ type Props = {
  * La redirection vers Keycloak et la déconnexion passent par le réseau :
  * sans retour visuel, l'utilisateur clique une deuxième fois.
  */
-export function SubmitButton({ children, pendingLabel, className = "" }: Props) {
+export function SubmitButton({
+  children,
+  pendingLabel,
+  className = "",
+}: Props) {
   const { pending } = useFormStatus();
 
   return (

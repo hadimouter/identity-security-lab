@@ -1,6 +1,7 @@
 import { MessageScreen } from "@/app/components/message-screen";
 import { SubmitButton } from "@/app/components/submit-button";
 import { login } from "@/app/actions";
+import { PRIMARY_BUTTON } from "@/lib/ui";
 
 /**
  * Page d'erreur d'authentification.
@@ -10,7 +11,10 @@ import { login } from "@/app/actions";
  *
  * Les codes viennent d'Auth.js et sont passés en query string.
  */
-const ERRORS: Record<string, { title: string; description: string; hint: string }> = {
+const ERRORS: Record<
+  string,
+  { title: string; description: string; hint: string }
+> = {
   Configuration: {
     title: "L'application n'est pas correctement configurée",
     description:
@@ -51,10 +55,7 @@ export default async function AuthErrorPage({
       hint={details.hint}
       action={
         <form action={login}>
-          <SubmitButton
-            pendingLabel="Redirection…"
-            className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
+          <SubmitButton pendingLabel="Redirection…" className={PRIMARY_BUTTON}>
             Réessayer
           </SubmitButton>
         </form>

@@ -61,14 +61,60 @@ export type Screen = {
  * Les annoncer rend le parcours lisible pendant la construction.
  */
 export const SCREENS: Screen[] = [
-  { href: "/profile", label: "Profil et claims", roles: ["user", "manager", "admin"], status: "disponible" },
-  { href: "/admin", label: "Administration", roles: ["admin"], status: "disponible" },
-  { href: "/request-access", label: "Demander un accès", roles: ["user", "manager", "admin"], status: "a-venir", phase: "phase 4" },
-  { href: "/my-requests", label: "Mes demandes", roles: ["user", "manager", "admin"], status: "a-venir", phase: "phase 4" },
-  { href: "/my-access", label: "Mes accès actifs", roles: ["user", "manager", "admin"], status: "a-venir", phase: "phase 5" },
-  { href: "/manager/requests", label: "Demandes à valider", roles: ["manager", "admin"], status: "a-venir", phase: "phase 4" },
-  { href: "/manager/grants", label: "Accès accordés", roles: ["manager", "admin"], status: "a-venir", phase: "phase 5" },
-  { href: "/manager/audit-logs", label: "Audit logs", roles: ["manager", "admin"], status: "a-venir", phase: "phase 4" },
+  {
+    href: "/profile",
+    label: "Profil et claims",
+    roles: ["user", "manager", "admin"],
+    status: "disponible",
+  },
+  {
+    href: "/admin",
+    label: "Administration",
+    roles: ["admin"],
+    status: "disponible",
+  },
+  {
+    href: "/request-access",
+    label: "Demander un accès",
+    roles: ["user", "manager", "admin"],
+    status: "a-venir",
+    phase: "phase 4",
+  },
+  {
+    href: "/my-requests",
+    label: "Mes demandes",
+    roles: ["user", "manager", "admin"],
+    status: "a-venir",
+    phase: "phase 4",
+  },
+  {
+    href: "/my-access",
+    label: "Mes accès actifs",
+    roles: ["user", "manager", "admin"],
+    status: "a-venir",
+    phase: "phase 5",
+  },
+  {
+    href: "/manager/requests",
+    label: "Demandes à valider",
+    roles: ["manager", "admin"],
+    status: "a-venir",
+    phase: "phase 4",
+  },
+  {
+    href: "/manager/grants",
+    label: "Accès accordés",
+    roles: ["manager", "admin"],
+    status: "a-venir",
+    phase: "phase 5",
+  },
+  {
+    href: "/manager/audit-logs",
+    label: "Audit logs",
+    roles: ["manager", "admin"],
+    status: "a-venir",
+    phase: "phase 4",
+  },
 ];
 
 export function isRole(value: string): value is Role {

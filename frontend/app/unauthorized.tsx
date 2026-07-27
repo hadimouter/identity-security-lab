@@ -1,6 +1,7 @@
 import { MessageScreen } from "@/app/components/message-screen";
 import { SubmitButton } from "@/app/components/submit-button";
 import { login } from "@/app/actions";
+import { PRIMARY_BUTTON } from "@/lib/ui";
 
 /**
  * Rendu par unauthorized(), avec un vrai statut HTTP 401.
@@ -18,10 +19,7 @@ export default function Unauthorized() {
       hint="401 et 403 ne disent pas la même chose. 401 : je ne sais pas qui vous êtes. 403 : je sais qui vous êtes, et ce n'est pas suffisant."
       action={
         <form action={login}>
-          <SubmitButton
-            pendingLabel="Redirection…"
-            className="rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-opacity hover:opacity-90"
-          >
+          <SubmitButton pendingLabel="Redirection…" className={PRIMARY_BUTTON}>
             Se connecter
           </SubmitButton>
         </form>
