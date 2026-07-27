@@ -18,13 +18,15 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 ## Statut
 
 - Phase 1, fondation documentaire : terminée
-- Phase 2, Keycloak et authentification : en cours
+- Phase 2, Keycloak et authentification : infrastructure en place, realm et application à venir
 - Phase 3, RBAC : à faire
 - Phase 4, workflow de demande d'accès : à faire
 - Phase 5, accès et révocation : à faire
 - Phase 6, finalisation : à faire
 
-Les sections d'installation décrivent la cible. Elles deviendront exécutables à la fin de la phase 2.
+Ce qui fonctionne aujourd'hui : `docker compose up -d` démarre PostgreSQL et Keycloak, et crée les deux bases du lab.
+
+Ce qui n'existe pas encore : le realm `identity-lab`, le frontend et l'API.
 
 ## Architecture
 
@@ -70,36 +72,44 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Démarre PostgreSQL et Keycloak. Le realm est importé automatiquement depuis `keycloak/realm-export.json`.
+Démarre PostgreSQL et Keycloak. Le premier lancement prend 30 à 60 secondes, le temps que Keycloak construise son schéma.
 
-Vérifier que Keycloak répond :
-
-```bash
-curl -s http://localhost:8080/realms/identity-lab/.well-known/openid-configuration | jq .issuer
-```
-
-### 3. Lancer l'API
+### 3. Vérifier que tout tourne
 
 ```bash
-cd backend
-npm install
-npx prisma migrate dev
-npm run dev
+docker compose ps
 ```
 
-### 4. Lancer le frontend
+Les deux services doivent être `running`, et Postgres `healthy`.
+
+Les deux bases du lab :
 
 ```bash
-cd frontend
-npm install
-npm run dev
+docker compose exec postgres psql -U lab -d postgres -c "\l"
 ```
 
-Application disponible sur http://localhost:3000
+Keycloak, via son endpoint de découverte OIDC :
+
+```bash
+curl -s http://localhost:8080/realms/master/.well-known/openid-configuration | jq .issuer
+```
+
+Console d'administration : http://localhost:8080
+
+Le détail des vérifications et le dépannage sont dans [docs/keycloak-setup.md](docs/keycloak-setup.md).
+
+### 4. Lancer l'API et le frontend
+
+Pas encore disponible. `backend/` et `frontend/` seront créés en phase 2.
+
+```bash
+cd backend  && npm install && npx prisma migrate dev && npm run dev
+cd frontend && npm install && npm run dev
+```
 
 ## Configuration Keycloak
 
-Le realm est versionné et réimporté à chaque démarrage, aucune configuration manuelle n'est nécessaire pour utiliser le lab.
+Le realm sera versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage, pour qu'aucune configuration manuelle ne soit nécessaire. Il n'existe pas encore, il est créé en phase 2.
 
 - Realm : `identity-lab`
 - Client frontend : `identity-lab-web`, confidentiel, Authorization Code + PKCE
@@ -114,15 +124,37 @@ La procédure de configuration manuelle est décrite dans [docs/keycloak-setup.m
 
 Copier `.env.example` vers `.env`. Le fichier `.env` ne doit jamais être commité.
 
+Infrastructure, utilisées par Docker Compose :
+
 ```txt
-DATABASE_URL              connexion PostgreSQL de l'application
+POSTGRES_USER             propriétaire des deux bases
+POSTGRES_PASSWORD         mot de passe local
+POSTGRES_PORT             port publié sur l'hôte, 5432 par défaut
+KEYCLOAK_ADMIN            compte admin de la console Keycloak
+KEYCLOAK_ADMIN_PASSWORD   mot de passe local
+KEYCLOAK_PORT             port publié sur l'hôte, 8080 par défaut
+```
+
+Application, utilisées à partir de la phase 2 :
+
+```txt
+DATABASE_URL              connexion PostgreSQL de l'API
+API_PORT                  port de l'API Express
+KEYCLOAK_AUDIENCE         audience attendue dans l'access token
 KEYCLOAK_ISSUER           http://localhost:8080/realms/identity-lab
 KEYCLOAK_CLIENT_ID        identity-lab-web
-KEYCLOAK_CLIENT_SECRET    secret du client, généré par Keycloak
-KEYCLOAK_AUDIENCE         identity-lab-api
+KEYCLOAK_CLIENT_SECRET    généré par Keycloak lors de la création du client
 AUTH_SECRET               secret de chiffrement des sessions
 AUTH_URL                  http://localhost:3000
 API_URL                   http://localhost:4000
+```
+
+Comptes de démonstration, créés dans Keycloak en phase 2 :
+
+```txt
+DEMO_USER_PASSWORD
+DEMO_MANAGER_PASSWORD
+DEMO_ADMIN_PASSWORD
 ```
 
 Les valeurs de `.env.example` sont des valeurs de démonstration locales, à ne jamais réutiliser ailleurs.
