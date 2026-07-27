@@ -2,6 +2,7 @@ import { unauthorized } from "next/navigation";
 
 import { auth } from "@/auth";
 import { TokenCountdown } from "@/app/components/token-countdown";
+import { fetchMe } from "@/lib/api";
 
 /**
  * Habillage des rôles.
@@ -54,6 +55,10 @@ export default async function ProfilePage() {
     return typeof value === "string" ? value : "—";
   };
 
+  // Même identité, mais telle qu'un service tiers la reconstitue après
+  // avoir vérifié le jeton lui-même.
+  const api = await fetchMe();
+
   return (
     <div className="space-y-12">
       <div className="space-y-2">
@@ -99,10 +104,11 @@ export default async function ProfilePage() {
           )}
         </div>
         <p className="text-xs text-muted">
-          Extraits de <span className="font-mono">realm_access.roles</span> de
-          l&apos;access token. Les rôles techniques de Keycloak sont filtrés. Le
-          rôle <span className="font-mono">admin</span> est distingué comme
-          accès à privilèges.
+          Extraits de l&apos;access token, claim{" "}
+          <span className="font-mono">realm_access.roles</span>. Les rôles
+          techniques de Keycloak sont filtrés. Le rôle{" "}
+          <span className="font-mono">admin</span> est distingué comme accès à
+          privilèges.
         </p>
       </section>
 
@@ -123,6 +129,59 @@ export default async function ProfilePage() {
           </p>
         </section>
       )}
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold tracking-tight">
+          Vu par l&apos;API Express
+        </h2>
+        {api.ok ? (
+          <>
+            <dl className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+              <Field label="Identifiant" value={api.data.identity.sub} mono />
+              <Field
+                label="Rôles retenus"
+                value={api.data.roles.join(", ") || "aucun"}
+                mono
+              />
+              <Field
+                label="Issuer vérifié"
+                value={api.data.token.issuer}
+                mono
+              />
+              <Field
+                label="Audience vérifiée"
+                value={api.data.token.audience}
+                mono
+              />
+            </dl>
+            <ul className="flex flex-wrap gap-2">
+              {api.data.token.checks.map((check) => (
+                <li
+                  key={check}
+                  className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs text-muted"
+                >
+                  {check}
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5 text-sm">
+            <p className="font-medium">
+              L&apos;API n&apos;a pas répondu
+              {api.status ? ` (HTTP ${api.status})` : ""}
+            </p>
+            <p className="mt-1 text-muted">{api.message}</p>
+          </div>
+        )}
+        <p className="text-xs text-muted">
+          Ces informations ne viennent pas de cette page. Le serveur Next.js a
+          appelé l&apos;API en joignant l&apos;access token, et l&apos;API a
+          revérifié elle-même la signature, l&apos;issuer, l&apos;audience et
+          l&apos;expiration avant de répondre. Elle ne fait confiance à aucun
+          élément transmis par l&apos;appelant.
+        </p>
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold tracking-tight">

@@ -18,15 +18,15 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 ## Statut
 
 - Phase 1, fondation documentaire : terminée
-- Phase 2, Keycloak et authentification : infrastructure, realm et frontend en place, API à venir
-- Phase 3, RBAC : à faire
+- Phase 2, Keycloak et authentification : terminée
+- Phase 3, RBAC : rôles extraits du jeton et contrôlés côté API ; reste leur union avec les accès accordés, qui dépend de la base
 - Phase 4, workflow de demande d'accès : à faire
 - Phase 5, accès et révocation : à faire
 - Phase 6, finalisation : à faire
 
-Ce qui fonctionne aujourd'hui : l'infrastructure démarre en une commande, le realm est importé automatiquement, et le frontend permet de se connecter via Keycloak, de consulter son profil et ses claims, puis de se déconnecter — session applicative et session SSO comprises.
+Ce qui fonctionne aujourd'hui : l'infrastructure démarre en une commande et importe le realm ; le frontend permet de se connecter via Keycloak, de consulter son profil et ses claims, puis de se déconnecter, session SSO comprise ; l'API valide elle-même les jetons reçus et applique un contrôle de rôle.
 
-Ce qui n'existe pas encore : l'API Express, le RBAC serveur et le workflow de demande d'accès.
+Ce qui n'existe pas encore : la base applicative, le workflow de demande d'accès, les accès accordés et les audit logs.
 
 ## Architecture
 
@@ -121,11 +121,37 @@ Next.js ne lit ses variables d'environnement que depuis son propre dossier. Le l
 
 ### 5. Lancer l'API
 
-Pas encore disponible. `backend/` est créé en phase 2.
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+API sur http://localhost:4000. Elle lit le même `.env` que le reste du lab.
+
+Le frontend fonctionne sans elle : la page profil affiche alors un avertissement à la place de la section « Vu par l'API Express ».
+
+### 6. Vérifier la validation des jetons
+
+Obtenir un jeton puis appeler l'API :
 
 ```bash
-cd backend && npm install && npx prisma migrate dev && npm run dev
+source .env
+TOKEN=$(curl -s -X POST "$KEYCLOAK_ISSUER/protocol/openid-connect/token" \
+  -d "client_id=identity-lab-web" -d "client_secret=$KEYCLOAK_CLIENT_SECRET" \
+  -d "username=user" -d "password=$DEMO_USER_PASSWORD" \
+  -d "grant_type=password" | jq -r .access_token)
+
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/me | jq
 ```
+
+Vérifier que le contrôle de rôle est bien appliqué par l'API, indépendamment de ce que le frontend affiche :
+
+```bash
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/admin/summary | jq
+```
+
+Doit renvoyer un 403 avec le rôle requis et les rôles détenus. Sans en-tête `Authorization`, la même route renvoie 401.
 
 ## Configuration Keycloak
 
@@ -204,6 +230,8 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Tableau de bord annonçant ce que le rôle permet et les écrans à venir
 - Pages 401, 403 et 404 en français, avec les bons statuts HTTP
 - Page d'erreur d'authentification expliquant chaque cas d'échec
+- API resource server validant chaque jeton : signature RS256 via le JWKS de Keycloak, issuer, audience et expiration
+- Contrôle de rôle serveur, renvoyant 401 sans identité et 403 avec un rôle insuffisant
 - RBAC appliqué côté serveur, avec validation JWT via JWKS
 - Demande d'accès justifiée
 - File d'approbation pour les managers

@@ -108,7 +108,21 @@ L'API vérifie le jeton puis le rôle avant toute action. C'est le seul contrôl
 
 Toutes les règles ci-dessus sont donc appliquées dans l'API. Le frontend se contourne avec un `curl` ou les DevTools, cacher un bouton ne protège pas un endpoint.
 
-Test de vérification prévu : appeler un endpoint manager avec le jeton d'un user via `curl`, et obtenir un 403 accompagné d'un audit log.
+Vérification, avec l'API démarrée :
+
+```bash
+source .env
+TOKEN=$(curl -s -X POST "$KEYCLOAK_ISSUER/protocol/openid-connect/token" \
+  -d "client_id=identity-lab-web" -d "client_secret=$KEYCLOAK_CLIENT_SECRET" \
+  -d "username=user" -d "password=$DEMO_USER_PASSWORD" \
+  -d "grant_type=password" | jq -r .access_token)
+
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/admin/summary | jq
+```
+
+Renvoie un 403 précisant le rôle requis et les rôles détenus, alors que le frontend n'affiche même pas le lien correspondant. Le contournement du frontend ne donne accès à rien.
+
+L'audit log associé sera écrit en phase 4, quand la base existera.
 
 ## Correspondance avec les routes
 
