@@ -1,0 +1,68 @@
+# Infrastructure locale du lab.
+#
+# Ce fichier ne contient que l'infrastructure : la base de donnees et
+# l'Identity Provider. Le frontend Next.js et l'API Express tournent sur
+# l'hote avec npm run dev, pour garder le hot reload et des logs lisibles.
+#
+#   docker compose up -d
+#
+# Les variables viennent du fichier .env, cree a partir de .env.example.
+
+name: identity-security-lab
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: identity-lab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # La base par defaut reste "postgres". Les deux bases du lab sont
+      # creees par scripts/init-db.sql.
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Les scripts de ce dossier ne sont joues qu'au tout premier
+      # demarrage, quand le volume de donnees est encore vide.
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      # Keycloak ne demarre qu'une fois ce test passe.
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7
+    container_name: identity-lab-keycloak
+    restart: unless-stopped
+    # start-dev : mode developpement, sans TLS ni cache distribue.
+    #             A ne jamais utiliser en production.
+    # --import-realm : importe les realms trouves dans
+    #                  /opt/keycloak/data/import au demarrage.
+    #                  Le dossier keycloak/ est vide jusqu'a la phase 2B.
+    command: ["start-dev", "--import-realm"]
+    environment:
+      # Compte administrateur cree au premier demarrage uniquement.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Keycloak persiste dans sa propre base. Le hote est le nom du
+      # service, et le port est celui du reseau interne, pas celui
+      # publie sur la machine.
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
