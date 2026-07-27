@@ -1,0 +1,33 @@
+# Dépendances
+node_modules/
+
+# Build
+.next/
+out/
+build/
+dist/
+
+# Environnement — aucun secret ne doit être commité
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Données locales (volumes Docker, dumps)
+postgres-data/
+*.dump
+*.log
+
+# Prisma (bases SQLite locales éventuelles)
+*.db
+*.db-journal
+
+# Système / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Tests
+coverage/
