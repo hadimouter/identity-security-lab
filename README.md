@@ -18,15 +18,15 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 ## Statut
 
 - Phase 1, fondation documentaire : terminée
-- Phase 2, Keycloak et authentification : infrastructure en place, realm et application à venir
+- Phase 2, Keycloak et authentification : infrastructure et realm en place, application à venir
 - Phase 3, RBAC : à faire
 - Phase 4, workflow de demande d'accès : à faire
 - Phase 5, accès et révocation : à faire
 - Phase 6, finalisation : à faire
 
-Ce qui fonctionne aujourd'hui : `docker compose up -d` démarre PostgreSQL et Keycloak, et crée les deux bases du lab.
+Ce qui fonctionne aujourd'hui : `docker compose up -d` démarre PostgreSQL et Keycloak, crée les deux bases du lab et importe le realm `identity-lab` avec ses rôles, ses clients et ses trois comptes de démonstration. On peut déjà obtenir un access token et lire ses claims.
 
-Ce qui n'existe pas encore : le realm `identity-lab`, le frontend et l'API.
+Ce qui n'existe pas encore : le frontend et l'API.
 
 ## Architecture
 
@@ -88,11 +88,13 @@ Les deux bases du lab :
 docker compose exec postgres psql -U lab -d postgres -c "\l"
 ```
 
-Keycloak, via son endpoint de découverte OIDC :
+Le realm importé, via son endpoint de découverte OIDC :
 
 ```bash
-curl -s http://localhost:8080/realms/master/.well-known/openid-configuration | jq .issuer
+curl -s http://localhost:8080/realms/identity-lab/.well-known/openid-configuration | jq .issuer
 ```
+
+Doit renvoyer `http://localhost:8080/realms/identity-lab`.
 
 Console d'administration : http://localhost:8080
 
@@ -109,7 +111,15 @@ cd frontend && npm install && npm run dev
 
 ## Configuration Keycloak
 
-Le realm sera versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage, pour qu'aucune configuration manuelle ne soit nécessaire. Il n'existe pas encore, il est créé en phase 2.
+Le realm est versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage. Aucune configuration manuelle n'est nécessaire pour utiliser le lab.
+
+Pour le reconstruire à partir de zéro et vérifier que l'export suffit :
+
+```bash
+docker compose down -v && docker compose up -d
+```
+
+Après toute modification dans la console, régénérer l'export avec `./scripts/export-realm.sh`.
 
 - Realm : `identity-lab`
 - Client frontend : `identity-lab-web`, confidentiel, Authorization Code + PKCE
