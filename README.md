@@ -69,8 +69,11 @@ cp .env.example .env
 Générer un secret de session réel, la valeur par défaut est un texte indicatif :
 
 ```bash
-sed -i '' "s|^AUTH_SECRET=.*|AUTH_SECRET=$(openssl rand -base64 32)|" .env
+tmp=$(mktemp)
+sed "s|^AUTH_SECRET=.*|AUTH_SECRET=$(openssl rand -base64 32)|" .env > "$tmp" && mv "$tmp" .env
 ```
+
+Écriture dans un fichier temporaire plutôt que `sed -i` : l'option ne s'écrit pas de la même façon sur macOS et sur Linux.
 
 ### 2. Démarrer l'infrastructure
 
@@ -106,20 +109,7 @@ Console d'administration : http://localhost:8080
 
 Le détail des vérifications et le dépannage sont dans [docs/keycloak-setup.md](docs/keycloak-setup.md).
 
-### 4. Lancer le frontend
-
-```bash
-cd frontend
-npm install
-ln -sfn ../.env .env.local
-npm run dev
-```
-
-Application sur http://localhost:3000
-
-Next.js ne lit ses variables d'environnement que depuis son propre dossier. Le lien `.env.local` évite de dupliquer le fichier : il n'y a qu'un seul `.env`, à la racine.
-
-### 5. Lancer l'API
+### 4. Préparer la base et lancer l'API
 
 ```bash
 cd backend
@@ -134,7 +124,22 @@ API sur http://localhost:4000. Elle lit le même `.env` que le reste du lab.
 
 Les utilisateurs ne sont pas à créer : ils sont provisionnés à la volée au premier appel authentifié, à partir du claim `sub` du jeton.
 
-Le frontend fonctionne sans elle : la page profil affiche alors un avertissement à la place de la section « Vu par l'API Express ».
+L'API se lance avant le frontend : c'est elle qui crée les tables et sème les rôles. Lancer le frontend d'abord donnerait une application dont toutes les pages de données affichent une erreur.
+
+### 5. Lancer le frontend
+
+```bash
+cd frontend
+npm install
+ln -sfn ../.env .env.local
+npm run dev
+```
+
+Application sur http://localhost:3000
+
+Next.js ne lit ses variables d'environnement que depuis son propre dossier. Le lien `.env.local` évite de dupliquer le fichier : il n'y a qu'un seul `.env`, à la racine.
+
+Le frontend fonctionne même si l'API est arrêtée : une bande d'avertissement signale alors que seuls les rôles du jeton sont pris en compte.
 
 ### 6. Vérifier la validation des jetons
 
@@ -337,6 +342,7 @@ docs/resources.md                standards et ressources
 - Permissions grossières : trois rôles, sans permissions atomiques.
 - L'inventaire des identités est sans pagination ni recherche, et ne montre que les comptes déjà connectés au moins une fois. Keycloak reste l'annuaire de référence.
 - Keycloak tourne en mode développement, sans TLS ni durcissement. Le realm est en `sslRequired: none`, ce qui n'est acceptable qu'en local.
+- L'API n'embarque ni `helmet`, ni limitation de débit, ni configuration CORS. Ce n'est pas un oubli : elle n'est appelée que par le serveur Next.js, sur la boucle locale, jamais directement par un navigateur. Voir [docs/architecture.md](docs/architecture.md) pour ce que chacun changerait en exposition réelle.
 - Auth.js v5 est encore en version bêta. C'est la version prévue pour l'App Router, mais son API peut changer.
 - L'access token est renouvelé automatiquement à l'approche de son expiration. Next.js interdisant d'écrire un cookie depuis un composant serveur, la persistance passe par `proxy.ts` : la requête qui déclenche le renouvellement en effectue donc deux, puis plus aucun jusqu'à l'expiration suivante.
 - Les pages 401 et 403 reposent sur `forbidden()` et `unauthorized()`, activés par le drapeau expérimental `authInterrupts` de Next.js. Ce sont les seules API qui rendent le bon statut HTTP, mais leur forme peut évoluer.
