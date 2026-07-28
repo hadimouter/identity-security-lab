@@ -1,7 +1,8 @@
 import { forbidden, unauthorized } from "next/navigation";
 
 import { auth } from "@/auth";
-import { fetchAuditLogs, fetchMe } from "@/lib/api";
+import { fetchAuditLogs } from "@/lib/api";
+import { getEffectiveRoles } from "@/lib/session-roles";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "short",
@@ -22,8 +23,7 @@ export default async function AuditLogsPage() {
   const session = await auth();
   if (!session) unauthorized();
 
-  const me = await fetchMe();
-  const roles = me.ok ? me.data.roles.all : session.roles;
+  const roles = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchAuditLogs();

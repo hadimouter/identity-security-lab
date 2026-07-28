@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { revokeGrantAction } from "@/app/actions/access";
 import { StatusBadge } from "@/app/components/status-badge";
 import { SubmitButton } from "@/app/components/submit-button";
-import { fetchAllGrants, fetchMe } from "@/lib/api";
+import { fetchAllGrants } from "@/lib/api";
+import { getEffectiveRoles } from "@/lib/session-roles";
 import { SECONDARY_BUTTON } from "@/lib/ui";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
@@ -16,8 +17,7 @@ export default async function ManagerGrantsPage() {
   const session = await auth();
   if (!session) unauthorized();
 
-  const me = await fetchMe();
-  const roles = me.ok ? me.data.roles.all : session.roles;
+  const roles = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchAllGrants();

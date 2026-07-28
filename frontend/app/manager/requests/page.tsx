@@ -4,7 +4,8 @@ import { auth } from "@/auth";
 import { reviewRequest } from "@/app/actions/access";
 import { DecisionButtons } from "@/app/components/decision-buttons";
 import { StatusBadge } from "@/app/components/status-badge";
-import { fetchMe, fetchPendingRequests } from "@/lib/api";
+import { fetchPendingRequests } from "@/lib/api";
+import { getEffectiveRoles } from "@/lib/session-roles";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "short",
@@ -17,8 +18,7 @@ export default async function ManagerRequestsPage() {
 
   // Le contrôle qui fait autorité est dans l'API : elle renvoie 403 sur
   // la file d'approbation. Celui-ci évite d'afficher une page vide.
-  const me = await fetchMe();
-  const roles = me.ok ? me.data.roles.all : session.roles;
+  const roles = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchPendingRequests();

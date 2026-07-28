@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { login, logout } from "@/app/actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { screensFor } from "@/lib/rbac";
+import { getEffectiveRoles } from "@/lib/session-roles";
 import { NAV_LINK, SECONDARY_BUTTON } from "@/lib/ui";
 
 import "./globals.css";
@@ -30,8 +31,9 @@ async function Header() {
   const session = await auth();
 
   // Seuls les écrans déjà implémentés sont proposés dans la barre.
+  const roles = session ? await getEffectiveRoles() : [];
   const available = session
-    ? screensFor(session.roles).filter((s) => s.status === "disponible")
+    ? screensFor(roles).filter((s) => s.status === "disponible")
     : [];
 
   return (

@@ -1,7 +1,7 @@
 import { forbidden, unauthorized } from "next/navigation";
 
 import { auth } from "@/auth";
-import { hasRole } from "@/lib/rbac";
+import { getEffectiveRoles } from "@/lib/session-roles";
 
 /**
  * Page d'administration.
@@ -24,7 +24,10 @@ export default async function AdminPage() {
   }
 
   // 403 : identité connue, rôle insuffisant.
-  if (!hasRole(session.roles, "admin")) {
+  // Les droits effectifs, pas ceux du jeton : un accès admin accordé par
+  // le workflow doit ouvrir cette page comme il ouvre les routes de l'API.
+  const roles = await getEffectiveRoles();
+  if (!roles.includes("admin")) {
     forbidden();
   }
 

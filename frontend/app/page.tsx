@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { login } from "@/app/actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ROLE_CAPABILITIES, ROLE_LABELS, isRole, screensFor } from "@/lib/rbac";
+import { getEffectiveRoles } from "@/lib/session-roles";
 import { PRIMARY_BUTTON } from "@/lib/ui";
 
 const DEMO_ACCOUNTS = [
@@ -87,8 +88,9 @@ async function Dashboard() {
   const session = await auth();
   if (!session) return null;
 
-  const roles = session.roles.filter(isRole);
-  const screens = screensFor(session.roles);
+  const effective = await getEffectiveRoles();
+  const roles = effective.filter(isRole);
+  const screens = screensFor(effective);
   // Dédoublonné : les listes se recouvrent quand un compte cumule des rôles.
   const capabilities = [
     ...new Set(roles.flatMap((role) => ROLE_CAPABILITIES[role])),

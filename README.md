@@ -22,11 +22,11 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 - Phase 3, RBAC : terminée
 - Phase 4, workflow de demande d'accès : terminée
 - Phase 5, accès et révocation : terminée
-- Phase 6, finalisation : captures d'écran et script de démonstration
+- Phase 6, finalisation : terminée
 
 Le cycle complet fonctionne : connexion SSO, demande d'accès justifiée, validation manager, accès accordé, révocation, et journal d'audit sur chaque action sensible.
 
-Ce qui reste : les captures d'écran, le script de démonstration et les améliorations listées plus bas.
+Le déroulé de démonstration est dans [docs/demo-script.md](docs/demo-script.md). Les évolutions envisagées sont listées plus bas.
 
 ## Architecture
 
@@ -254,16 +254,43 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 
 ## Captures d'écran
 
-À ajouter en phase 6.
+### Connexion déléguée à Keycloak
 
-```txt
-docs/screenshots/login.png             page de login Keycloak
-docs/screenshots/profile.png           profil et claims décodés
-docs/screenshots/access-denied.png     accès refusé sur /admin
-docs/screenshots/request-access.png    formulaire de demande
-docs/screenshots/manager-requests.png  file d'approbation
-docs/screenshots/audit-logs.png        audit logs
-```
+![Page de login Keycloak](docs/screenshots/login.png)
+
+Le mot de passe ne transite jamais par l'application.
+
+### Profil et claims du jeton
+
+![Profil et claims décodés](docs/screenshots/profile.png)
+
+La même identité apparaît deux fois : telle que l'application l'a reçue de Keycloak, et telle que l'API la reconstitue après avoir vérifié le jeton elle-même.
+
+### Accès refusé
+
+![Accès refusé sur /admin](docs/screenshots/access-denied.png)
+
+403 et non 401 : l'identité est connue, le rôle ne suffit pas.
+
+### Demande d'accès
+
+![Formulaire de demande d'accès](docs/screenshots/request-access.png)
+
+### File d'approbation
+
+![File d'approbation du manager](docs/screenshots/manager-requests.png)
+
+### Journal d'audit
+
+![Journal d'audit](docs/screenshots/audit-logs.png)
+
+Les refus y figurent au même titre que les succès.
+
+### Accès accordés et révocation
+
+![Accès accordés](docs/screenshots/manager-grants.png)
+
+Les autres écrans : [tableau de bord](docs/screenshots/dashboard.png), [mes demandes](docs/screenshots/my-requests.png), [mes accès](docs/screenshots/my-access.png).
 
 ## Concepts IAM démontrés
 
