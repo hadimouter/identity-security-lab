@@ -22,6 +22,9 @@ function required(name: string): string {
 export const env = {
   port: Number(process.env.API_PORT ?? 4000),
 
+  /** Base applicative. Distincte de celle de Keycloak. */
+  databaseUrl: required("DATABASE_URL"),
+
   /** Issuer OIDC attendu. Tout jeton émis ailleurs est rejeté. */
   keycloakIssuer: required("KEYCLOAK_ISSUER"),
 

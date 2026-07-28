@@ -103,6 +103,7 @@ export const authenticate: RequestHandler = async (req, res, next) => {
       sub: payload.sub,
       username: payload.preferred_username as string | undefined,
       email: payload.email as string | undefined,
+      name: payload.name as string | undefined,
       roles: extractRoles(payload),
       expiresAt: payload.exp,
     };

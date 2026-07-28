@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { env } from "../env.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { provision } from "../middleware/provision.js";
 import { requireRole } from "../middleware/require-role.js";
 
 export const router: Router = Router();
@@ -12,14 +13,24 @@ export const router: Router = Router();
  * Rien ici ne vient de l'appelant : tout est dérivé du jeton dont la
  * signature, l'issuer, l'audience et l'expiration ont été vérifiés.
  */
-router.get("/me", authenticate, (req, res) => {
+router.get("/me", authenticate, provision, (req, res) => {
   const auth = req.auth!;
+  const local = req.localUser!;
 
   res.json({
     identity: {
       sub: auth.sub,
       username: auth.username,
       email: auth.email,
+    },
+    /**
+     * Ligne locale créée au premier appel. Elle ne duplique pas
+     * l'annuaire : elle sert de point de rattachement aux demandes,
+     * aux accès accordés et aux audit logs.
+     */
+    localUser: {
+      id: local.id,
+      createdAt: local.createdAt,
     },
     roles: auth.roles,
     token: {

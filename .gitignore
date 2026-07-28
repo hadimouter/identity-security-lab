@@ -18,7 +18,9 @@ postgres-data/
 *.dump
 *.log
 
-# Prisma (bases SQLite locales éventuelles)
+# Prisma
+# Le client est généré à partir du schéma : npx prisma generate
+backend/src/generated/
 *.db
 *.db-journal
 

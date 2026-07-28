@@ -9,6 +9,8 @@ export type AuthenticatedUser = {
   sub: string;
   username?: string;
   email?: string;
+  /** Claim `name`, utilisé pour le provisionnement local. */
+  name?: string;
   /** Rôles métier extraits de realm_access.roles. */
   roles: string[];
   /** Expiration du jeton, en secondes depuis l'époque Unix. */
@@ -20,6 +22,8 @@ declare global {
   namespace Express {
     interface Request {
       auth?: AuthenticatedUser;
+      /** Ligne locale rattachée à l'identité, posée par le middleware provision. */
+      localUser?: import("./generated/prisma/client.js").User;
     }
   }
 }

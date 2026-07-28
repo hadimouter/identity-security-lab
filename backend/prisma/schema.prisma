@@ -1,0 +1,120 @@
+// Modèle de données du lab.
+//
+// L'application ne stocke aucun mot de passe et ne duplique pas les
+// utilisateurs de Keycloak. Elle conserve un mapping vers le claim `sub`
+// du jeton, et tout ce que l'Identity Provider ne sait pas : les demandes
+// d'accès, les accès accordés et les traces d'audit.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Utilisateur local, rattaché à une identité Keycloak.
+model User {
+  id String @id @default(cuid())
+
+  /// Claim `sub` du jeton. Identifiant stable, contrairement à l'email.
+  keycloakId String  @unique
+  email      String  @unique
+  name       String?
+  createdAt  DateTime @default(now())
+
+  requestsMade     AccessRequest[] @relation("RequestRequester")
+  requestsReviewed AccessRequest[] @relation("RequestReviewer")
+  grantsHeld       AccessGrant[]   @relation("GrantUser")
+  grantsApproved   AccessGrant[]   @relation("GrantApprover")
+  grantsRevoked    AccessGrant[]   @relation("GrantRevoker")
+  auditLogs        AuditLog[]      @relation("AuditActor")
+}
+
+/// Rôle demandable. Miroir applicatif des rôles de realm Keycloak.
+model Role {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  requests AccessRequest[]
+  grants   AccessGrant[]
+}
+
+/// Demande d'accès à un rôle, soumise à validation.
+model AccessRequest {
+  id            String              @id @default(cuid())
+  requesterId   String
+  roleId        String
+  justification String
+  status        AccessRequestStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewComment String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  requester  User         @relation("RequestRequester", fields: [requesterId], references: [id])
+  reviewedBy User?        @relation("RequestReviewer", fields: [reviewedById], references: [id])
+  role       Role         @relation(fields: [roleId], references: [id])
+  /// Le grant issu de cette demande, s'il y a eu approbation.
+  grant      AccessGrant?
+
+  @@index([status])
+  @@index([requesterId])
+}
+
+/// Accès effectivement accordé. C'est la source des droits applicatifs.
+model AccessGrant {
+  id           String            @id @default(cuid())
+  userId       String
+  roleId       String
+  approvedById String
+  /// Demande d'origine. Permet de remonter à la justification.
+  requestId    String?           @unique
+  status       AccessGrantStatus @default(ACTIVE)
+  approvedAt   DateTime          @default(now())
+  revokedById  String?
+  revokedAt    DateTime?
+
+  user       User           @relation("GrantUser", fields: [userId], references: [id])
+  approvedBy User           @relation("GrantApprover", fields: [approvedById], references: [id])
+  revokedBy  User?          @relation("GrantRevoker", fields: [revokedById], references: [id])
+  role       Role           @relation(fields: [roleId], references: [id])
+  request    AccessRequest? @relation(fields: [requestId], references: [id])
+
+  /// Index sur le couple lu à chaque requête pour les droits effectifs.
+  @@index([userId, status])
+}
+
+/// Trace d'une action sensible. Jamais modifiée ni supprimée.
+model AuditLog {
+  id         String   @id @default(cuid())
+  /// Null pour une action sans auteur identifié.
+  actorId    String?
+  action     String
+  targetType String
+  targetId   String?
+  /// success ou denied.
+  result     String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+enum AccessGrantStatus {
+  ACTIVE
+  REVOKED
+}
