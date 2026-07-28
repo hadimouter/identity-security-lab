@@ -22,6 +22,8 @@ declare global {
   namespace Express {
     interface Request {
       auth?: AuthenticatedUser;
+      /** Droits effectifs, posés par la chaîne `authenticated`. */
+      effectiveRoles?: import("./lib/access.js").EffectiveRoles;
       /** Ligne locale rattachée à l'identité, posée par le middleware provision. */
       localUser?: import("./generated/prisma/client.js").User;
     }

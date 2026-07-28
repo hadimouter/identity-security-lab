@@ -10,7 +10,17 @@ import { auth } from "@/auth";
 
 export type ApiMe = {
   identity: { sub: string; username?: string; email?: string };
-  roles: string[];
+  localUser: { id: string; createdAt: string };
+  /**
+   * Décomposition des droits effectifs :
+   *   all = fromToken ∪ fromGrants
+   * C'est `all` qui décide, et il est recalculé à chaque requête.
+   */
+  roles: {
+    fromToken: string[];
+    fromGrants: string[];
+    all: string[];
+  };
   token: {
     issuer: string;
     audience: string;

@@ -1,11 +1,10 @@
 import { Router } from "express";
 
 import { env } from "../env.js";
-import { authenticate } from "../middleware/authenticate.js";
-import { provision } from "../middleware/provision.js";
+import { authenticated } from "../middleware/authenticated.js";
 import { requireRole } from "../middleware/require-role.js";
 
-export const router: Router = Router();
+export const meRouter: Router = Router();
 
 /**
  * Identité telle que l'API la reconstitue à partir du jeton validé.
@@ -13,9 +12,10 @@ export const router: Router = Router();
  * Rien ici ne vient de l'appelant : tout est dérivé du jeton dont la
  * signature, l'issuer, l'audience et l'expiration ont été vérifiés.
  */
-router.get("/me", authenticate, provision, (req, res) => {
+meRouter.get("/me", ...authenticated, (req, res) => {
   const auth = req.auth!;
   const local = req.localUser!;
+  const roles = req.effectiveRoles!;
 
   res.json({
     identity: {
@@ -32,7 +32,15 @@ router.get("/me", authenticate, provision, (req, res) => {
       id: local.id,
       createdAt: local.createdAt,
     },
-    roles: auth.roles,
+    /**
+     * Détail volontairement exposé : on voit d'où vient chaque rôle.
+     * C'est le cœur du modèle, `all` est l'ensemble qui décide.
+     */
+    roles: {
+      fromToken: roles.fromToken,
+      fromGrants: roles.fromGrants,
+      all: roles.all,
+    },
     token: {
       issuer: env.keycloakIssuer,
       audience: env.keycloakAudience,
@@ -54,9 +62,14 @@ router.get("/me", authenticate, provision, (req, res) => {
  * de ce que le frontend affiche ou masque. Un appel direct au curl avec
  * le jeton d'un utilisateur sans privilège reçoit un 403.
  */
-router.get("/admin/summary", authenticate, requireRole("admin"), (req, res) => {
-  res.json({
-    message: "Contenu réservé aux administrateurs.",
-    requestedBy: req.auth!.username,
-  });
-});
+meRouter.get(
+  "/admin/summary",
+  ...authenticated,
+  requireRole("admin"),
+  (req, res) => {
+    res.json({
+      message: "Contenu réservé aux administrateurs.",
+      requestedBy: req.auth!.username,
+    });
+  },
+);

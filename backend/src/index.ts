@@ -3,7 +3,9 @@ import express from "express";
 import "./types.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error-handler.js";
-import { router as apiRouter } from "./routes/me.js";
+import { accessRequestsRouter } from "./routes/access-requests.js";
+import { catalogRouter } from "./routes/catalog.js";
+import { meRouter } from "./routes/me.js";
 
 const app = express();
 
@@ -17,7 +19,9 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.use("/api", apiRouter);
+app.use("/api", meRouter);
+app.use("/api", accessRequestsRouter);
+app.use("/api", catalogRouter);
 
 app.use(notFound);
 app.use(errorHandler);

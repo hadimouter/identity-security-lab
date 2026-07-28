@@ -137,10 +137,21 @@ export default async function ProfilePage() {
         {api.ok ? (
           <>
             <dl className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-              <Field label="Identifiant" value={api.data.identity.sub} mono />
+              <Field label="Identifiant Keycloak" value={api.data.identity.sub} mono />
+              <Field label="Utilisateur local" value={api.data.localUser.id} mono />
               <Field
-                label="Rôles retenus"
-                value={api.data.roles.join(", ") || "aucun"}
+                label="Rôles du jeton"
+                value={api.data.roles.fromToken.join(", ") || "aucun"}
+                mono
+              />
+              <Field
+                label="Rôles des accès accordés"
+                value={api.data.roles.fromGrants.join(", ") || "aucun"}
+                mono
+              />
+              <Field
+                label="Droits effectifs"
+                value={api.data.roles.all.join(", ") || "aucun"}
                 mono
               />
               <Field
@@ -180,6 +191,11 @@ export default async function ProfilePage() {
           revérifié elle-même la signature, l&apos;issuer, l&apos;audience et
           l&apos;expiration avant de répondre. Elle ne fait confiance à aucun
           élément transmis par l&apos;appelant.
+        </p>
+        <p className="text-xs text-muted">
+          Les droits effectifs sont l&apos;union des rôles du jeton et des accès
+          accordés encore actifs, recalculée à chaque requête. C&apos;est ce qui
+          rend une révocation immédiate : le jeton ne change pas, les droits si.
         </p>
       </section>
 
