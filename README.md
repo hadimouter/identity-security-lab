@@ -182,7 +182,7 @@ Après toute modification dans la console, régénérer l'export avec `./scripts
 - Rôles de realm : user, manager, admin
 - Console admin : http://localhost:8080
 
-La procédure de configuration manuelle est décrite dans [docs/keycloak-setup.md](docs/keycloak-setup.md), rédigée en phase 2.
+La procédure de configuration manuelle, utile pour comprendre ce que contient l'export, est décrite dans [docs/keycloak-setup.md](docs/keycloak-setup.md).
 
 ## Variables d'environnement
 
@@ -199,7 +199,7 @@ KEYCLOAK_ADMIN_PASSWORD   mot de passe local
 KEYCLOAK_PORT             port publié sur l'hôte, 8080 par défaut
 ```
 
-Application, utilisées à partir de la phase 2 :
+Application, lues par l'API et par le frontend :
 
 ```txt
 DATABASE_URL              connexion PostgreSQL de l'API
@@ -213,7 +213,7 @@ AUTH_URL                  http://localhost:3000
 API_URL                   http://localhost:4000
 ```
 
-Comptes de démonstration, créés dans Keycloak en phase 2 :
+Comptes de démonstration, créés dans Keycloak par l'import du realm :
 
 ```txt
 DEMO_USER_PASSWORD
@@ -239,7 +239,7 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Profil utilisateur, claims décodés et compte à rebours d'expiration du jeton
 - Renouvellement automatique de l'access token, avec écran dédié si la session SSO a expiré
 - Aucun jeton exposé au navigateur : ni l'access token ni le refresh token ne quittent le serveur
-- Tableau de bord annonçant ce que le rôle permet et les écrans à venir
+- Tableau de bord annonçant ce que le rôle permet et les écrans qu'il ouvre
 - Pages 401, 403 et 404 en français, avec les bons statuts HTTP
 - Page d'erreur d'authentification expliquant chaque cas d'échec
 - API resource server validant chaque jeton : signature RS256 via le JWKS de Keycloak, issuer, audience et expiration
@@ -247,18 +247,11 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Provisionnement de l'utilisateur local à la volée, sur le claim `sub`
 - Droits effectifs recalculés à chaque requête : rôles du jeton réunis aux accès accordés actifs
 - Demande d'accès justifiée, file d'approbation, approbation et refus commentés
+- Accès accordé rattaché à son approbateur, à sa justification et horodaté
 - Séparation des tâches : personne ne traite sa propre demande
 - Révocation immédiatement effective, sans changement de jeton
-- Journal d'audit sur chaque action sensible, succès comme refus
+- Journal d'audit sur chaque action sensible, succès comme refus, réservé aux managers et admins
 - Inventaire des identités provisionnées, réservé à l'admin, avec leurs accès et qui les a décidés
-- RBAC appliqué côté serveur, avec validation JWT via JWKS
-- Demande d'accès justifiée
-- File d'approbation pour les managers
-- Approbation ou refus, avec commentaire de revue
-- Accès accordé, rattaché à un approbateur et horodaté
-- Révocation immédiatement effective
-- Séparation des tâches : personne ne peut approuver sa propre demande
-- Audit log sur chaque action sensible, réservé aux managers et admins
 
 ## Captures d'écran
 
@@ -304,7 +297,7 @@ Les refus y figurent au même titre que les succès.
 
 Seules les identités provisionnées à la volée y figurent : Keycloak reste l'annuaire de référence.
 
-Les autres écrans : [tableau de bord](docs/screenshots/dashboard.png), [mes demandes](docs/screenshots/my-requests.png), [mes accès](docs/screenshots/my-access.png).
+Les autres écrans : [accueil public](docs/screenshots/home.png), [tableau de bord](docs/screenshots/dashboard.png), [mes demandes](docs/screenshots/my-requests.png), [mes accès](docs/screenshots/my-access.png), [administration](docs/screenshots/admin.png).
 
 ## Concepts IAM démontrés
 
@@ -328,8 +321,9 @@ docs/architecture.md             architecture, flux et décisions
 docs/oauth-oidc-notes.md         OAuth 2.0, OIDC, PKCE, jetons, validation JWKS
 docs/rbac-model.md               rôles, permissions, calcul des droits effectifs
 docs/access-request-scenario.md  scénario fonctionnel complet
-docs/keycloak-setup.md           configuration pas à pas (phase 2)
-docs/audit-logs.md               événements d'audit et format (phase 4)
+docs/keycloak-setup.md           configuration du realm, pas à pas
+docs/audit-logs.md               événements d'audit et format
+docs/demo-script.md              déroulé de démonstration en douze étapes
 docs/resources.md                standards et ressources
 ```
 
@@ -346,7 +340,7 @@ docs/resources.md                standards et ressources
 - Auth.js v5 est encore en version bêta. C'est la version prévue pour l'App Router, mais son API peut changer.
 - L'access token est renouvelé automatiquement à l'approche de son expiration. Next.js interdisant d'écrire un cookie depuis un composant serveur, la persistance passe par `proxy.ts` : la requête qui déclenche le renouvellement en effectue donc deux, puis plus aucun jusqu'à l'expiration suivante.
 - Les pages 401 et 403 reposent sur `forbidden()` et `unauthorized()`, activés par le drapeau expérimental `authInterrupts` de Next.js. Ce sont les seules API qui rendent le bon statut HTTP, mais leur forme peut évoluer.
-- Le contrôle de rôle sur `/admin` est appliqué au rendu de la page, donc côté serveur, mais il ne protège que l'affichage. L'autorisation qui fait autorité passe dans l'API en phase 3.
+- Le contrôle de rôle sur `/admin` est appliqué au rendu de la page, donc côté serveur, mais il ne protège que l'affichage : il évite de rendre un écran vide et des liens inutilisables. L'autorisation qui fait autorité est celle de l'API, qui revérifie le jeton et recalcule les droits à chaque requête.
 - Pas de déploiement, le lab tourne en local uniquement.
 - Pas de tests automatisés dans le périmètre du MVP.
 

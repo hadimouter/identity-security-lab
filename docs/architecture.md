@@ -87,7 +87,9 @@ Détail dans [rbac-model.md](rbac-model.md).
 
 ### Docker Compose limité à l'infrastructure
 
-`docker compose up` démarre PostgreSQL et Keycloak. Le frontend et l'API tournent en `npm run dev` sur l'hôte, pour garder le hot reload et des logs lisibles. La containerisation de l'application est reportée en phase 6.
+`docker compose up` démarre PostgreSQL et Keycloak, c'est-à-dire tout ce qui doit être identique d'une machine à l'autre : la base et le realm importé. Le frontend et l'API tournent en `npm run dev` sur l'hôte, pour garder le hot reload et des logs lisibles.
+
+L'application n'est pas containerisée. C'est un choix assumé pour un lab qu'on ouvre pour lire le code : deux `npm run dev` sont plus faciles à inspecter et à interrompre qu'un build d'image. Une mise en production inverserait la décision.
 
 ## Ports
 

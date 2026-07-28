@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend
 
-## Getting Started
+Client OIDC du lab, en Next.js App Router. Rôle OAuth 2.0 : client.
 
-First, run the development server:
+L'installation complète est décrite dans le [README à la racine](../README.md). Cette note ne couvre que ce qui est propre à ce dossier.
+
+## Démarrer
 
 ```bash
+npm install
+ln -sfn ../.env .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le lien `.env.local` évite de dupliquer le fichier : Next.js ne lit ses variables que depuis son propre dossier, et il n'y a qu'un seul `.env`, à la racine.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+L'API doit tourner sur le port 4000. Sans elle, l'application reste utilisable mais une bande d'avertissement signale que seuls les rôles du jeton sont pris en compte.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Ce qu'il faut savoir en lisant le code
 
-## Learn More
+```txt
+auth.ts                        configuration Auth.js, callbacks jwt et session,
+                               renouvellement de l'access token
+proxy.ts                       fait passer chaque requête par auth() pour que
+                               le cookie renouvelé soit réellement réécrit
+lib/session.ts                 requireFreshSession(), utilisé par les pages protégées
+lib/session-roles.ts           droits effectifs, avec repli restrictif si l'API répond mal
+lib/rbac.ts                    matrice des rôles et des écrans
+lib/api.ts                     appels serveur vers l'API, avec le Bearer token
+app/api/auth/[...nextauth]/    retire l'access token de la réponse servie au navigateur
+```
 
-To learn more about Next.js, take a look at the following resources:
+Deux points de sécurité à ne pas défaire :
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Aucun jeton n'est exposé au navigateur. Les appels à l'API partent du serveur Next.js, jamais du client.
+- Le masquage des liens et des pages n'est que du confort. L'autorisation qui fait autorité est celle de l'API.

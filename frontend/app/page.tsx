@@ -185,8 +185,9 @@ async function Dashboard() {
           })}
         </ul>
         <p className="text-xs text-muted">
-          Les écrans à venir sont annoncés pour rendre lisible le périmètre
-          complet du lab, tel que décrit dans le PRD.
+          Cette liste est calculée à partir de vos droits effectifs : les rôles
+          de votre jeton, réunis aux accès qui vous ont été accordés. Un autre
+          rôle ouvre d&apos;autres écrans.
         </p>
       </section>
     </div>

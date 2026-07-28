@@ -13,7 +13,7 @@ export default function Forbidden() {
       code="403 — Accès refusé"
       title="Votre rôle ne permet pas cet accès"
       description="Vous êtes bien authentifié, mais ce contenu demande un rôle que vous n'avez pas."
-      hint="C'est le principe du moindre privilège : un accès n'est pas accordé par défaut, il doit être demandé, justifié et approuvé par un manager. Le workflow de demande arrive en phase 4."
+      hint="C'est le principe du moindre privilège : un accès n'est pas accordé par défaut, il doit être demandé, justifié et approuvé par un manager. Si celui-ci vous est nécessaire, faites-en la demande depuis l'écran « Demander un accès »."
     />
   );
 }

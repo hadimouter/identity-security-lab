@@ -4,7 +4,7 @@
 
 Démarrer l'infrastructure du lab, puis configurer le realm, les rôles et les utilisateurs de démonstration.
 
-Le document suit l'ordre des phases. La partie infrastructure est opérationnelle. La configuration du realm est en cours de rédaction, elle sera complétée pendant la phase 2B.
+Le realm est versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage : il n'y a rien à configurer à la main pour utiliser le lab. La procédure manuelle est conservée ici parce qu'elle explique ce que contient l'export, et parce qu'un export ne se relit pas facilement.
 
 ## Prérequis
 
@@ -64,7 +64,13 @@ curl -s http://localhost:8080/realms/master/.well-known/openid-configuration | j
 
 Doit renvoyer `"http://localhost:8080/realms/master"`.
 
-Tant que le realm du lab n'existe pas, seul le realm `master` répond. À partir de la phase 2B, la même commande fonctionnera sur `identity-lab`.
+La même commande fonctionne sur le realm du lab, une fois l'import terminé :
+
+```bash
+curl -s http://localhost:8080/realms/identity-lab/.well-known/openid-configuration | jq .issuer
+```
+
+Doit renvoyer `"http://localhost:8080/realms/identity-lab"`. Si seul `master` répond, l'import du realm a échoué : les logs sont dans `docker compose logs keycloak`.
 
 ### Console d'administration
 

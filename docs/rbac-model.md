@@ -122,7 +122,7 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/admin/summar
 
 Renvoie un 403 précisant le rôle requis et les rôles détenus, alors que le frontend n'affiche même pas le lien correspondant. Le contournement du frontend ne donne accès à rien.
 
-L'audit log associé sera écrit en phase 4, quand la base existera.
+Le refus est journalisé : une ligne `unauthorized_access_attempt` est écrite avec le rôle requis et les rôles détenus. Voir [audit-logs.md](audit-logs.md).
 
 ## Correspondance avec les routes
 
