@@ -2,7 +2,6 @@ import { Router } from "express";
 
 import { env } from "../env.js";
 import { authenticated } from "../middleware/authenticated.js";
-import { requireRole } from "../middleware/require-role.js";
 
 export const meRouter: Router = Router();
 
@@ -55,21 +54,3 @@ meRouter.get("/me", ...authenticated, (req, res) => {
   });
 });
 
-/**
- * Route réservée au rôle admin.
- *
- * Sert à démontrer que le refus est prononcé par l'API, indépendamment
- * de ce que le frontend affiche ou masque. Un appel direct au curl avec
- * le jeton d'un utilisateur sans privilège reçoit un 403.
- */
-meRouter.get(
-  "/admin/summary",
-  ...authenticated,
-  requireRole("admin"),
-  (req, res) => {
-    res.json({
-      message: "Contenu réservé aux administrateurs.",
-      requestedBy: req.auth!.username,
-    });
-  },
-);

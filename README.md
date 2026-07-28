@@ -245,6 +245,7 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Séparation des tâches : personne ne traite sa propre demande
 - Révocation immédiatement effective, sans changement de jeton
 - Journal d'audit sur chaque action sensible, succès comme refus
+- Inventaire des identités provisionnées, réservé à l'admin, avec leurs accès et qui les a décidés
 - RBAC appliqué côté serveur, avec validation JWT via JWKS
 - Demande d'accès justifiée
 - File d'approbation pour les managers
@@ -292,6 +293,12 @@ Les refus y figurent au même titre que les succès.
 
 ![Accès accordés](docs/screenshots/manager-grants.png)
 
+### Inventaire des identités
+
+![Liste des utilisateurs](docs/screenshots/admin-users.png)
+
+Seules les identités provisionnées à la volée y figurent : Keycloak reste l'annuaire de référence.
+
 Les autres écrans : [tableau de bord](docs/screenshots/dashboard.png), [mes demandes](docs/screenshots/my-requests.png), [mes accès](docs/screenshots/my-access.png).
 
 ## Concepts IAM démontrés
@@ -328,6 +335,7 @@ docs/resources.md                standards et ressources
 - Pas d'accès temporaire, les accès accordés n'expirent pas automatiquement.
 - Pas de campagne de revue d'accès ni de recertification.
 - Permissions grossières : trois rôles, sans permissions atomiques.
+- L'inventaire des identités est sans pagination ni recherche, et ne montre que les comptes déjà connectés au moins une fois. Keycloak reste l'annuaire de référence.
 - Keycloak tourne en mode développement, sans TLS ni durcissement. Le realm est en `sslRequired: none`, ce qui n'est acceptable qu'en local.
 - Auth.js v5 est encore en version bêta. C'est la version prévue pour l'App Router, mais son API peut changer.
 - L'access token est renouvelé automatiquement à l'approche de son expiration. Next.js interdisant d'écrire un cookie depuis un composant serveur, la persistance passe par `proxy.ts` : la requête qui déclenche le renouvellement en effectue donc deux, puis plus aucun jusqu'à l'expiration suivante.

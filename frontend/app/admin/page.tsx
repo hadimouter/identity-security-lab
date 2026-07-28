@@ -1,19 +1,38 @@
+import Link from "next/link";
 import { forbidden } from "next/navigation";
 
 import { requireFreshSession } from "@/lib/session";
 import { getEffectiveRoles } from "@/lib/session-roles";
 
+/** Écrans d'administration, avec ce que chacun apporte. */
+const ADMIN_SCREENS = [
+  {
+    href: "/admin/users",
+    label: "Utilisateurs",
+    description: "identités provisionnées et leurs accès",
+  },
+  {
+    href: "/manager/grants",
+    label: "Accès accordés",
+    description: "octroi et révocation",
+  },
+  {
+    href: "/manager/audit-logs",
+    label: "Journal d'audit",
+    description: "toutes les actions sensibles",
+  },
+];
+
 /**
  * Page d'administration.
  *
- * Contrôle d'accès volontairement minimal à ce stade : il sert à rendre
- * jouable l'étape 4 du script de démonstration, où un utilisateur sans
- * privilège tente d'accéder à cet écran et se fait refuser.
+ * Le contrôle ci-dessous vit dans le rendu de page, donc côté serveur,
+ * mais il ne protège que l'affichage : il évite de rendre un écran vide
+ * et de proposer des liens inutilisables.
  *
- * Ce contrôle vit dans le rendu de page, donc côté serveur, mais il ne
- * protège que l'affichage. En phase 3, l'autorisation qui fait autorité
- * passera dans l'API Express, qui vérifie le jeton et recalcule les
- * droits effectifs à chaque requête.
+ * L'autorisation qui fait autorité est celle de l'API, qui revérifie le
+ * jeton et recalcule les droits effectifs à chaque requête. Un appel
+ * direct au curl sur /api/users reçoit un 403 sans passer par ici.
  */
 export default async function AdminPage() {
   // 401 si aucune identité, écran de session expirée si le
@@ -41,17 +60,33 @@ export default async function AdminPage() {
 
       <div className="rounded-lg border border-border bg-surface p-5 text-sm text-muted">
         <p>
-          Vous voyez cette page parce que votre jeton porte le rôle{" "}
-          <span className="font-mono">admin</span>. Un compte{" "}
+          Vous voyez cette page parce que vos droits effectifs contiennent{" "}
+          <span className="font-mono">admin</span> — qu&apos;il vienne de votre
+          jeton Keycloak ou d&apos;un accès approuvé. Un compte{" "}
           <span className="font-mono">user</span> ou{" "}
-          <span className="font-mono">manager</span> obtient un 403 sur cette
-          même adresse.
-        </p>
-        <p className="mt-3">
-          Le contenu d&apos;administration — liste des utilisateurs, accès
-          accordés, audit logs — arrive en phases 4 et 5.
+          <span className="font-mono">manager</span>, lui, obtient un 403 sur
+          cette même adresse, et l&apos;API le refuse aussi en direct.
         </p>
       </div>
+
+      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
+        {ADMIN_SCREENS.map((screen) => (
+          <li key={screen.href}>
+            <Link
+              href={screen.href}
+              className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3.5 text-sm transition-colors hover:bg-foreground/5"
+            >
+              <span className="font-medium text-accent">{screen.label}</span>
+              <span className="font-mono text-xs text-muted">
+                {screen.href}
+              </span>
+              <span className="ml-auto text-xs text-muted">
+                {screen.description}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

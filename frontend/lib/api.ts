@@ -55,6 +55,22 @@ export type ApiGrant = {
   request: { justification: string } | null;
 };
 
+export type ApiUser = {
+  id: string;
+  keycloakId: string;
+  email: string;
+  name: string | null;
+  createdAt: string;
+  activeGrants: { role: string; approvedAt: string; approvedBy: string }[];
+  revokedGrants: {
+    role: string;
+    approvedAt: string;
+    revokedAt: string | null;
+    revokedBy: string | null;
+  }[];
+  requestCount: number;
+};
+
 export type ApiAuditLog = {
   id: string;
   action: string;
@@ -135,6 +151,8 @@ export const revokeGrant = (id: string, reason: string) =>
     method: "POST",
     body: { reason },
   });
+
+export const fetchUsers = () => call<{ users: ApiUser[] }>("/api/users");
 
 export const fetchAuditLogs = () =>
   call<{ logs: ApiAuditLog[] }>("/api/audit-logs");

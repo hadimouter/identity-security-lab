@@ -4,6 +4,7 @@ import "./types.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error-handler.js";
 import { accessRequestsRouter } from "./routes/access-requests.js";
+import { adminRouter } from "./routes/admin.js";
 import { catalogRouter } from "./routes/catalog.js";
 import { grantsRouter } from "./routes/grants.js";
 import { meRouter } from "./routes/me.js";
@@ -24,6 +25,7 @@ app.use("/api", meRouter);
 app.use("/api", accessRequestsRouter);
 app.use("/api", catalogRouter);
 app.use("/api", grantsRouter);
+app.use("/api", adminRouter);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -53,6 +53,11 @@ export type Screen = {
   label: string;
   /** Libellé court, pour la barre de navigation. */
   navLabel: string;
+  /**
+   * Faux pour les écrans atteignables depuis un écran d'aiguillage.
+   * La barre reste lisible : neuf liens pour un admin la font déborder.
+   */
+  inNav?: boolean;
   roles: Role[];
   status: ScreenStatus;
   phase?: string;
@@ -76,6 +81,15 @@ export const SCREENS: Screen[] = [
     navLabel: "Admin",
     roles: ["admin"],
     status: "disponible",
+  },
+  {
+    href: "/admin/users",
+    label: "Utilisateurs",
+    navLabel: "Utilisateurs",
+    roles: ["admin"],
+    status: "disponible",
+    // Atteignable depuis /admin, qui sert d'aiguillage.
+    inNav: false,
   },
   {
     href: "/request-access",

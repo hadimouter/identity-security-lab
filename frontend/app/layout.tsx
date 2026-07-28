@@ -36,7 +36,7 @@ async function Header() {
     ? await getEffectiveRoles()
     : { roles: [], degraded: false };
   const available = session
-    ? screensFor(roles).filter((s) => s.status === "disponible")
+    ? screensFor(roles).filter((s) => s.status === "disponible" && s.inNav !== false)
     : [];
 
   return (
