@@ -159,6 +159,9 @@ async function loadReviewableRequest(
     return null;
   }
 
+  // Chemin rapide, pour un message clair dans le cas courant. La garde
+  // qui fait autorité est dans la transaction : entre cette lecture et
+  // l'écriture, un autre manager peut avoir traité la demande.
   if (request.status !== "PENDING") {
     res.status(409).json({
       error: "conflict",
@@ -213,27 +216,42 @@ accessRequestsRouter.post(
     const comment =
       typeof req.body?.comment === "string" ? req.body.comment.trim() : null;
 
-    // L'accès a pu être accordé par une autre voie entre-temps.
-    const existing = await prisma.accessGrant.findFirst({
-      where: { userId: request.requesterId, roleId: request.roleId, status: "ACTIVE" },
-    });
-    if (existing) {
-      res.status(409).json({
-        error: "conflict",
-        message: "Le demandeur dispose déjà de cet accès.",
-      });
-      return;
-    }
-
     const result = await prisma.$transaction(async (tx) => {
-      const updated = await tx.accessRequest.update({
-        where: { id: request.id },
+      // Garde atomique : la mise à jour n'aboutit que si la demande est
+      // encore PENDING. Deux managers qui approuvent simultanément
+      // passeraient tous deux une simple lecture ; ici, le second obtient
+      // un compte de 0 et repart avec un 409, pas une erreur interne.
+      const claimed = await tx.accessRequest.updateMany({
+        where: { id: request.id, status: "PENDING" },
         data: {
           status: "APPROVED",
           reviewedById: reviewer.id,
           reviewedAt: new Date(),
           reviewComment: comment,
         },
+      });
+
+      if (claimed.count === 0) {
+        return { conflict: "Cette demande vient d'être traitée." } as const;
+      }
+
+      // Même raisonnement pour l'accès : la vérification doit vivre dans
+      // la transaction, sinon deux demandes distinctes pour le même rôle
+      // pourraient produire deux accès actifs.
+      const existing = await tx.accessGrant.findFirst({
+        where: {
+          userId: request.requesterId,
+          roleId: request.roleId,
+          status: "ACTIVE",
+        },
+      });
+
+      if (existing) {
+        return { conflict: "Le demandeur dispose déjà de cet accès." } as const;
+      }
+
+      const updated = await tx.accessRequest.findUniqueOrThrow({
+        where: { id: request.id },
         select: REQUEST_SHAPE,
       });
 
@@ -267,6 +285,11 @@ accessRequestsRouter.post(
       return { request: updated, grantId: grant.id };
     });
 
+    if ("conflict" in result) {
+      res.status(409).json({ error: "conflict", message: result.conflict });
+      return;
+    }
+
     res.json(result);
   },
 );
@@ -290,14 +313,23 @@ accessRequestsRouter.post(
       typeof req.body?.comment === "string" ? req.body.comment.trim() : null;
 
     const updated = await prisma.$transaction(async (tx) => {
-      const result = await tx.accessRequest.update({
-        where: { id: request.id },
+      // Même garde atomique que pour l'approbation.
+      const claimed = await tx.accessRequest.updateMany({
+        where: { id: request.id, status: "PENDING" },
         data: {
           status: "REJECTED",
           reviewedById: reviewer.id,
           reviewedAt: new Date(),
           reviewComment: comment,
         },
+      });
+
+      if (claimed.count === 0) {
+        return { conflict: "Cette demande vient d'être traitée." } as const;
+      }
+
+      const result = await tx.accessRequest.findUniqueOrThrow({
+        where: { id: request.id },
         select: REQUEST_SHAPE,
       });
 
@@ -312,6 +344,11 @@ accessRequestsRouter.post(
 
       return result;
     });
+
+    if ("conflict" in updated) {
+      res.status(409).json({ error: "conflict", message: updated.conflict });
+      return;
+    }
 
     res.json(updated);
   },
