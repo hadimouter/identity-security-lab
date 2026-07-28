@@ -324,8 +324,26 @@ docs/access-request-scenario.md  scénario fonctionnel complet
 docs/keycloak-setup.md           configuration du realm, pas à pas
 docs/audit-logs.md               événements d'audit et format
 docs/demo-script.md              déroulé de démonstration en douze étapes
+docs/microsoft-identity-notes.md AD, Entra ID, PIM, Access Reviews, Graph
+docs/access-review-reporting.md  revue d'accès et lecture du rapport
 docs/resources.md                standards et ressources
 ```
+
+## Module complémentaire : Microsoft Identity
+
+Le lab montre un accès en train d'être demandé, approuvé et révoqué. Il ne montre pas l'autre moitié du métier : ouvrir un annuaire qui tourne depuis cinq ans et y chercher ce qui a dérivé.
+
+[scripts/microsoft-identity](scripts/microsoft-identity/README.md) ajoute cinq scripts Python qui inspectent un extrait d'annuaire mocké et signalent les comptes dormants, les hiérarchies cassées, les groupes sensibles jamais revus, les comptes de service sans propriétaire, et produisent une feuille de campagne de revue d'accès.
+
+```bash
+python3 scripts/microsoft-identity/detect-inactive-accounts.py
+python3 scripts/microsoft-identity/detect-users-without-manager.py
+python3 scripts/microsoft-identity/detect-sensitive-group-members.py
+python3 scripts/microsoft-identity/detect-service-accounts-without-owner.py
+python3 scripts/microsoft-identity/access-review-report.py
+```
+
+Python standard, aucune dépendance. Données mockées : pas de tenant Entra ID ni d'appel Microsoft Graph, mais chaque script indique l'appel qui produirait son fichier d'entrée sur un vrai tenant. Le module est indépendant du lab et ne demande ni Docker ni base de données.
 
 ## Limites connues
 

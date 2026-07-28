@@ -1,0 +1,15 @@
+id,email,displayName,department,managerEmail,enabled,lastLogin,createdAt,userType
+u001,marie.dubois@contoso-lab.com,Marie Dubois,IT,thomas.leroy@contoso-lab.com,true,2026-07-27,2024-03-11,Member
+u002,julien.moreau@contoso-lab.com,Julien Moreau,Finance,claire.petit@contoso-lab.com,true,2026-07-24,2023-09-04,Member
+u003,thomas.leroy@contoso-lab.com,Thomas Leroy,IT,sophie.bernard@contoso-lab.com,true,2026-07-28,2022-01-17,Member
+u004,nadia.benali@contoso-lab.com,Nadia Benali,Marketing,,true,2026-07-20,2025-06-02,Member
+u005,pierre.girard@contoso-lab.com,Pierre Girard,Sales,claire.petit@contoso-lab.com,true,2026-03-30,2023-02-20,Member
+u006,laurent.fabre@contoso-lab.com,Laurent Fabre,Finance,claire.petit@contoso-lab.com,true,2025-06-23,2021-11-08,Member
+u007,celine.roux@contoso-lab.com,Celine Roux,HR,sophie.bernard@contoso-lab.com,false,2026-05-12,2022-07-19,Member
+u008,external.partner@fabrikam-lab.com,Alex Whitfield,,,true,2026-02-11,2025-10-03,Guest
+u009,amine.kaddour@contoso-lab.com,Amine Kaddour,Operations,celine.roux@contoso-lab.com,true,2026-07-25,2024-08-14,Member
+u010,sarah.lemoine@contoso-lab.com,Sarah Lemoine,Legal,gregory.vasseur@contoso-lab.com,true,2026-07-21,2024-11-27,Member
+u011,david.nguyen@contoso-lab.com,David Nguyen,IT,thomas.leroy@contoso-lab.com,true,,2026-01-09,Member
+u012,sophie.bernard@contoso-lab.com,Sophie Bernard,HR,claire.petit@contoso-lab.com,true,2026-07-27,2020-05-06,Member
+u013,claire.petit@contoso-lab.com,Claire Petit,Executive,claire.petit@contoso-lab.com,true,2026-07-28,2019-02-04,Member
+u014,karim.haddad@contoso-lab.com,Karim Haddad,IT,thomas.leroy@contoso-lab.com,true,2026-07-26,2023-05-30,Member

@@ -1,0 +1,7 @@
+id,name,description,sensitivity,ownerEmail
+g001,Global Admins,Administration complete du tenant,critical,thomas.leroy@contoso-lab.com
+g002,Finance Admins,Parametrage des applications financieres,high,claire.petit@contoso-lab.com
+g003,HR Managers,Acces au SIRH et aux donnees du personnel,high,sophie.bernard@contoso-lab.com
+g004,Application Owners,Proprietaires fonctionnels des applications,high,karim.haddad@contoso-lab.com
+g005,External Collaborators,Intervenants externes et prestataires,high,
+g006,Standard Users,Acces bureautique de base,standard,thomas.leroy@contoso-lab.com

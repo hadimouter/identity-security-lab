@@ -1,0 +1,17 @@
+userEmail,application,role,grantedAt,grantedBy,businessJustification,reviewStatus
+marie.dubois@contoso-lab.com,Azure Portal,Contributor,2026-04-02,thomas.leroy@contoso-lab.com,Administration des ressources cloud de l'equipe IT,approved
+marie.dubois@contoso-lab.com,Payroll Connector,Reader,2026-06-03,karim.haddad@contoso-lab.com,Supervision des flux de paie,not_reviewed
+thomas.leroy@contoso-lab.com,Azure Portal,Owner,2025-11-14,claire.petit@contoso-lab.com,Responsable de la plateforme cloud,approved
+thomas.leroy@contoso-lab.com,Entra ID Admin Center,Global Administrator,2025-11-14,claire.petit@contoso-lab.com,Administration de l'annuaire,approved
+julien.moreau@contoso-lab.com,Finance Reporting,Analyst,2026-05-14,claire.petit@contoso-lab.com,Production des etats financiers mensuels,approved
+julien.moreau@contoso-lab.com,SAP,Accountant,2023-09-10,claire.petit@contoso-lab.com,Saisie comptable,pending
+laurent.fabre@contoso-lab.com,Finance Reporting,Administrator,2021-12-01,claire.petit@contoso-lab.com,Parametrage des rapports financiers,not_reviewed
+laurent.fabre@contoso-lab.com,SAP,Treasury,2021-12-01,claire.petit@contoso-lab.com,Gestion de tresorerie,not_reviewed
+celine.roux@contoso-lab.com,HR Portal,HR Administrator,2022-07-25,sophie.bernard@contoso-lab.com,Administration du SIRH,approved
+celine.roux@contoso-lab.com,Entra ID Admin Center,User Administrator,2023-01-15,,,not_reviewed
+sophie.bernard@contoso-lab.com,HR Portal,HR Manager,2025-10-02,claire.petit@contoso-lab.com,Encadrement de l'equipe RH,approved
+karim.haddad@contoso-lab.com,CI/CD Pipeline,Maintainer,2026-01-20,thomas.leroy@contoso-lab.com,Maintenance des chaines de deploiement,approved
+nadia.benali@contoso-lab.com,Marketing Suite,Editor,2025-06-05,thomas.leroy@contoso-lab.com,Publication des campagnes marketing,pending
+pierre.girard@contoso-lab.com,CRM,Sales User,2023-02-25,thomas.leroy@contoso-lab.com,Suivi des opportunites commerciales,not_reviewed
+external.partner@fabrikam-lab.com,Project Workspace,Contributor,2025-10-05,,Collaboration sur le projet Atlas,not_reviewed
+gregory.vasseur@contoso-lab.com,Legacy Import,Administrator,2024-11-02,claire.petit@contoso-lab.com,Reprise des donnees historiques,not_reviewed

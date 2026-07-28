@@ -24,6 +24,11 @@ backend/src/generated/
 *.db
 *.db-journal
 
+# Rapports du module Microsoft Identity
+# Régénérés par les scripts, des extraits figurent dans leur README.
+scripts/microsoft-identity/output/
+__pycache__/
+
 # Système / éditeurs
 .DS_Store
 Thumbs.db
