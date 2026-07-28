@@ -1,6 +1,6 @@
 # Audit logs
 
-Document de cadrage. Il sera complété pendant la phase 4, quand les événements seront réellement écrits par l'API.
+Les événements décrits ici sont écrits par l'API et consultables sur `/manager/audit-logs`.
 
 ## Objectif
 
@@ -57,10 +57,38 @@ role_checked
 - Les logs ne sont ni modifiables ni supprimables depuis l'application.
 - La consultation est réservée aux rôles `manager` et `admin`.
 
-## À compléter en phase 4
+## Implémentation
 
-- table `audit_logs` dans le schéma Prisma
-- helper d'écriture appelé par les handlers de l'API
-- correspondance exacte entre chaque endpoint et l'événement écrit
-- page de consultation et filtres
-- exemples de journaux produits par le scénario de démonstration
+Le helper d'écriture est dans `backend/src/lib/audit.ts`. Il expose deux fonctions, et le choix entre les deux n'est pas anodin.
+
+`writeAuditLog(tx, entry)` prend un client de transaction. Utilisé pour toute action qui modifie des droits : la trace et la modification sont écrites ensemble, ou pas du tout. Une approbation sans sa trace serait un trou dans la piste d'audit.
+
+`writeAuditLogSafely(entry)` écrit en dehors de toute transaction et absorbe les erreurs. Réservé aux refus : un accès refusé doit le rester même si la base d'audit est indisponible. L'inverse offrirait un moyen de contourner le contrôle en saturant la base.
+
+## Correspondance entre actions et événements
+
+```txt
+POST /api/access-requests               access_request_created
+POST /api/access-requests/:id/approve   access_request_approved
+                                        access_grant_created
+POST /api/access-requests/:id/reject    access_request_rejected
+POST /api/grants/:id/revoke             access_grant_revoked
+refus de requireRole                    unauthorized_access_attempt
+refus pour séparation des tâches        unauthorized_access_attempt
+```
+
+## Exemple produit par le scénario de démonstration
+
+```txt
+succès   access_request_created       user      {"role":"manager","justification":"..."}
+refus    unauthorized_access_attempt  user      {"heldRoles":["user"],"requiredRoles":["manager","admin"]}
+succès   access_request_approved      manager   {"role":"manager","comment":"Prise de fonction validee."}
+succès   access_grant_created         manager   {"role":"manager","grantedTo":"cms4mbt0x..."}
+refus    unauthorized_access_attempt  manager   {"reason":"separation_of_duties","attemptedAction":"approve"}
+succès   access_grant_revoked         manager   {"role":"manager","reason":"Fin de la mission..."}
+```
+
+## Reste à faire
+
+- filtres et pagination sur la page de consultation
+- export du journal, pour une revue hors application

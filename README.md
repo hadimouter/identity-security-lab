@@ -19,14 +19,14 @@ Relier des concepts IAM souvent abstraits à une implémentation réelle. Le lab
 
 - Phase 1, fondation documentaire : terminée
 - Phase 2, Keycloak et authentification : terminée
-- Phase 3, RBAC : rôles extraits du jeton et contrôlés côté API ; reste leur union avec les accès accordés, qui dépend de la base
-- Phase 4, workflow de demande d'accès : à faire
-- Phase 5, accès et révocation : à faire
-- Phase 6, finalisation : à faire
+- Phase 3, RBAC : terminée
+- Phase 4, workflow de demande d'accès : terminée
+- Phase 5, accès et révocation : terminée
+- Phase 6, finalisation : captures d'écran et script de démonstration
 
-Ce qui fonctionne aujourd'hui : l'infrastructure démarre en une commande et importe le realm ; le frontend permet de se connecter via Keycloak, de consulter son profil et ses claims, puis de se déconnecter, session SSO comprise ; l'API valide elle-même les jetons reçus et applique un contrôle de rôle.
+Le cycle complet fonctionne : connexion SSO, demande d'accès justifiée, validation manager, accès accordé, révocation, et journal d'audit sur chaque action sensible.
 
-Ce qui n'existe pas encore : la base applicative, le workflow de demande d'accès, les accès accordés et les audit logs.
+Ce qui reste : les captures d'écran, le script de démonstration et les améliorations listées plus bas.
 
 ## Architecture
 
@@ -124,10 +124,15 @@ Next.js ne lit ses variables d'environnement que depuis son propre dossier. Le l
 ```bash
 cd backend
 npm install
+npx prisma migrate dev     # crée les tables dans la base identitylab
+npx prisma generate        # génère le client, non versionné
+npx prisma db seed         # crée les rôles user, manager, admin
 npm run dev
 ```
 
 API sur http://localhost:4000. Elle lit le même `.env` que le reste du lab.
+
+Les utilisateurs ne sont pas à créer : ils sont provisionnés à la volée au premier appel authentifié, à partir du claim `sub` du jeton.
 
 Le frontend fonctionne sans elle : la page profil affiche alors un avertissement à la place de la section « Vu par l'API Express ».
 
@@ -232,6 +237,12 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Page d'erreur d'authentification expliquant chaque cas d'échec
 - API resource server validant chaque jeton : signature RS256 via le JWKS de Keycloak, issuer, audience et expiration
 - Contrôle de rôle serveur, renvoyant 401 sans identité et 403 avec un rôle insuffisant
+- Provisionnement de l'utilisateur local à la volée, sur le claim `sub`
+- Droits effectifs recalculés à chaque requête : rôles du jeton réunis aux accès accordés actifs
+- Demande d'accès justifiée, file d'approbation, approbation et refus commentés
+- Séparation des tâches : personne ne traite sa propre demande
+- Révocation immédiatement effective, sans changement de jeton
+- Journal d'audit sur chaque action sensible, succès comme refus
 - RBAC appliqué côté serveur, avec validation JWT via JWKS
 - Demande d'accès justifiée
 - File d'approbation pour les managers

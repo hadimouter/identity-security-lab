@@ -49,7 +49,9 @@ export type ApiGrant = {
   approvedAt: string;
   revokedAt: string | null;
   role: { name: string };
+  user: { email: string; name: string | null };
   approvedBy: { email: string; name: string | null };
+  revokedBy: { email: string; name: string | null } | null;
   request: { justification: string } | null;
 };
 
@@ -121,6 +123,14 @@ export const fetchPendingRequests = () =>
   call<{ requests: ApiAccessRequest[] }>("/api/access-requests?status=PENDING");
 
 export const fetchMyGrants = () => call<{ grants: ApiGrant[] }>("/api/grants/mine");
+
+export const fetchAllGrants = () => call<{ grants: ApiGrant[] }>("/api/grants");
+
+export const revokeGrant = (id: string, reason: string) =>
+  call<unknown>(`/api/grants/${id}/revoke`, {
+    method: "POST",
+    body: { reason },
+  });
 
 export const fetchAuditLogs = () => call<{ logs: ApiAuditLog[] }>("/api/audit-logs");
 

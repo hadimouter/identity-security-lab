@@ -108,10 +108,9 @@ export const SCREENS: Screen[] = [
   {
     href: "/manager/grants",
     label: "Accès accordés",
-    navLabel: "Accès accordés",
+    navLabel: "Accès",
     roles: ["manager", "admin"],
-    status: "a-venir",
-    phase: "phase 5",
+    status: "disponible",
   },
   {
     href: "/manager/audit-logs",

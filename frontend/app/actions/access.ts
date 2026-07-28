@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { createAccessRequest, reviewAccessRequest } from "@/lib/api";
+import { createAccessRequest, reviewAccessRequest, revokeGrant } from "@/lib/api";
 
 export type FormState = { error?: string } | null;
 
@@ -45,4 +45,17 @@ export async function reviewRequest(formData: FormData): Promise<void> {
   revalidatePath("/manager/requests");
   revalidatePath("/manager/audit-logs");
   revalidatePath("/my-requests");
+}
+
+/** Révoque un accès accordé, depuis l'écran des accès. */
+export async function revokeGrantAction(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") ?? "");
+  const reason = String(formData.get("reason") ?? "");
+
+  await revokeGrant(id, reason);
+
+  revalidatePath("/manager/grants");
+  revalidatePath("/manager/audit-logs");
+  revalidatePath("/my-access");
+  revalidatePath("/");
 }

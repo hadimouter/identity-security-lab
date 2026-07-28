@@ -15,24 +15,6 @@ catalogRouter.get("/roles", ...authenticated, async (_req, res) => {
   res.json({ roles });
 });
 
-/** Ses propres accès, actifs comme révoqués. */
-catalogRouter.get("/grants/mine", ...authenticated, async (req, res) => {
-  const grants = await prisma.accessGrant.findMany({
-    where: { userId: req.localUser!.id },
-    select: {
-      id: true,
-      status: true,
-      approvedAt: true,
-      revokedAt: true,
-      role: { select: { name: true } },
-      approvedBy: { select: { email: true, name: true } },
-      request: { select: { justification: true } },
-    },
-    orderBy: { approvedAt: "desc" },
-  });
-  res.json({ grants });
-});
-
 /**
  * Journal d'audit.
  *

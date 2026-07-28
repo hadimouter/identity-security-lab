@@ -5,6 +5,7 @@ import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error-handler.js";
 import { accessRequestsRouter } from "./routes/access-requests.js";
 import { catalogRouter } from "./routes/catalog.js";
+import { grantsRouter } from "./routes/grants.js";
 import { meRouter } from "./routes/me.js";
 
 const app = express();
@@ -22,6 +23,7 @@ app.get("/health", (_req, res) => {
 app.use("/api", meRouter);
 app.use("/api", accessRequestsRouter);
 app.use("/api", catalogRouter);
+app.use("/api", grantsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
