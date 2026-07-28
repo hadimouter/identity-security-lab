@@ -1,6 +1,6 @@
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { revokeGrantAction } from "@/app/actions/access";
 import { StatusBadge } from "@/app/components/status-badge";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -14,10 +14,9 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function ManagerGrantsPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
-  const roles = await getEffectiveRoles();
+  const { roles } = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchAllGrants();
@@ -28,7 +27,9 @@ export default async function ManagerGrantsPage() {
   return (
     <div className="space-y-10">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Accès accordés</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Accès accordés
+        </h1>
         <p className="text-muted">
           Révoquer prend effet immédiatement : les droits sont recalculés à
           chaque requête. Le jeton de la personne reste valide jusqu&apos;à son

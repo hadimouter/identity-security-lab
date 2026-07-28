@@ -67,24 +67,27 @@ export type ApiAuditLog = {
 };
 
 export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; status?: number; message: string };
+  { ok: true; data: T } | { ok: false; status?: number; message: string };
 
 async function call<T>(
   path: string,
   init?: { method?: string; body?: unknown },
 ): Promise<ApiResult<T>> {
+  // auth() déclenche le callback jwt, donc le renouvellement si le jeton
+  // a expiré. C'est le seul chemin qui rend la valeur à jour : le cookie,
+  // lui, conserve le jeton d'origine.
   const session = await auth();
 
   if (!session?.accessToken) {
-    return { ok: false, message: "Aucun access token dans la session." };
+    return { ok: false, message: "Aucun access token disponible." };
   }
+  const accessToken = session.accessToken;
 
   try {
     const response = await fetch(`${process.env.API_URL}${path}`, {
       method: init?.method ?? "GET",
       headers: {
-        Authorization: `Bearer ${session.accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
       },
       body: init?.body ? JSON.stringify(init.body) : undefined,
@@ -122,7 +125,8 @@ export const fetchMyRequests = () =>
 export const fetchPendingRequests = () =>
   call<{ requests: ApiAccessRequest[] }>("/api/access-requests?status=PENDING");
 
-export const fetchMyGrants = () => call<{ grants: ApiGrant[] }>("/api/grants/mine");
+export const fetchMyGrants = () =>
+  call<{ grants: ApiGrant[] }>("/api/grants/mine");
 
 export const fetchAllGrants = () => call<{ grants: ApiGrant[] }>("/api/grants");
 
@@ -132,7 +136,8 @@ export const revokeGrant = (id: string, reason: string) =>
     body: { reason },
   });
 
-export const fetchAuditLogs = () => call<{ logs: ApiAuditLog[] }>("/api/audit-logs");
+export const fetchAuditLogs = () =>
+  call<{ logs: ApiAuditLog[] }>("/api/audit-logs");
 
 export const createAccessRequest = (roleName: string, justification: string) =>
   call<ApiAccessRequest>("/api/access-requests", {

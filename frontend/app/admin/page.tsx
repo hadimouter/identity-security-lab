@@ -1,6 +1,6 @@
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { getEffectiveRoles } from "@/lib/session-roles";
 
 /**
@@ -16,17 +16,14 @@ import { getEffectiveRoles } from "@/lib/session-roles";
  * droits effectifs à chaque requête.
  */
 export default async function AdminPage() {
-  const session = await auth();
-
-  // 401 : aucune identité établie.
-  if (!session) {
-    unauthorized();
-  }
+  // 401 si aucune identité, écran de session expirée si le
+  // renouvellement du jeton a échoué.
+  await requireFreshSession();
 
   // 403 : identité connue, rôle insuffisant.
   // Les droits effectifs, pas ceux du jeton : un accès admin accordé par
   // le workflow doit ouvrir cette page comme il ouvre les routes de l'API.
-  const roles = await getEffectiveRoles();
+  const { roles } = await getEffectiveRoles();
   if (!roles.includes("admin")) {
     forbidden();
   }

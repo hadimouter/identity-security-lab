@@ -1,6 +1,4 @@
-import { unauthorized } from "next/navigation";
-
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { TokenCountdown } from "@/app/components/token-countdown";
 import { fetchMe } from "@/lib/api";
 
@@ -43,11 +41,7 @@ function Field({
  * Express, qui vérifie le jeton et les rôles à chaque requête (phase 3).
  */
 export default async function ProfilePage() {
-  const session = await auth();
-
-  if (!session) {
-    unauthorized();
-  }
+  const session = await requireFreshSession();
 
   const claims = session.claims ?? {};
   const claim = (name: string) => {
@@ -137,8 +131,16 @@ export default async function ProfilePage() {
         {api.ok ? (
           <>
             <dl className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-              <Field label="Identifiant Keycloak" value={api.data.identity.sub} mono />
-              <Field label="Utilisateur local" value={api.data.localUser.id} mono />
+              <Field
+                label="Identifiant Keycloak"
+                value={api.data.identity.sub}
+                mono
+              />
+              <Field
+                label="Utilisateur local"
+                value={api.data.localUser.id}
+                mono
+              />
               <Field
                 label="Rôles du jeton"
                 value={api.data.roles.fromToken.join(", ") || "aucun"}

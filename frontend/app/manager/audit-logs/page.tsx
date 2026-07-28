@@ -1,6 +1,6 @@
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { fetchAuditLogs } from "@/lib/api";
 import { getEffectiveRoles } from "@/lib/session-roles";
 
@@ -20,10 +20,9 @@ const ACTIONS: Record<string, string> = {
 };
 
 export default async function AuditLogsPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
-  const roles = await getEffectiveRoles();
+  const { roles } = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchAuditLogs();
@@ -31,7 +30,9 @@ export default async function AuditLogsPage() {
   return (
     <div className="space-y-10">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Journal d&apos;audit</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Journal d&apos;audit
+        </h1>
         <p className="text-muted">
           Qui a fait quoi, sur quoi, quand, et avec quel résultat. Les refus y
           figurent au même titre que les succès : un journal qui ne contiendrait

@@ -1,6 +1,4 @@
-import { unauthorized } from "next/navigation";
-
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { StatusBadge } from "@/app/components/status-badge";
 import { fetchMyGrants } from "@/lib/api";
 
@@ -10,8 +8,7 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function MyAccessPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
   const result = await fetchMyGrants();
 

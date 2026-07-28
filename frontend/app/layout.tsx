@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { auth } from "@/auth";
 import { login, logout } from "@/app/actions";
+import { DegradedBanner } from "@/app/components/degraded-banner";
 import { SubmitButton } from "@/app/components/submit-button";
 import { screensFor } from "@/lib/rbac";
 import { getEffectiveRoles } from "@/lib/session-roles";
@@ -31,13 +32,16 @@ async function Header() {
   const session = await auth();
 
   // Seuls les écrans déjà implémentés sont proposés dans la barre.
-  const roles = session ? await getEffectiveRoles() : [];
+  const { roles, degraded } = session
+    ? await getEffectiveRoles()
+    : { roles: [], degraded: false };
   const available = session
     ? screensFor(roles).filter((s) => s.status === "disponible")
     : [];
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
+      {degraded && <DegradedBanner />}
       <nav className="mx-auto flex min-h-16 max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3">
         <Link
           href="/"

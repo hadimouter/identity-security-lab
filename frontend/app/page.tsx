@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { login } from "@/app/actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { ROLE_CAPABILITIES, ROLE_LABELS, isRole, screensFor } from "@/lib/rbac";
@@ -85,10 +86,9 @@ function PublicHome() {
 
 /** Vue connectée : ce que le rôle permet, et où aller ensuite. */
 async function Dashboard() {
-  const session = await auth();
-  if (!session) return null;
+  const session = await requireFreshSession();
 
-  const effective = await getEffectiveRoles();
+  const { roles: effective } = await getEffectiveRoles();
   const roles = effective.filter(isRole);
   const screens = screensFor(effective);
   // Dédoublonné : les listes se recouvrent quand un compte cumule des rôles.

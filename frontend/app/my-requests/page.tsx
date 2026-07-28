@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { unauthorized } from "next/navigation";
-
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { StatusBadge } from "@/app/components/status-badge";
 import { fetchMyRequests } from "@/lib/api";
 import { INLINE_LINK } from "@/lib/ui";
@@ -12,8 +10,7 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function MyRequestsPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
   const result = await fetchMyRequests();
 
@@ -61,7 +58,9 @@ export default async function MyRequestsPage() {
                 <div className="border-t border-border pt-3 text-xs text-muted">
                   Traitée le {dateFormat.format(new Date(request.reviewedAt))}
                   {request.reviewedBy ? ` par ${request.reviewedBy.email}` : ""}
-                  {request.reviewComment ? ` — « ${request.reviewComment} »` : ""}
+                  {request.reviewComment
+                    ? ` — « ${request.reviewComment} »`
+                    : ""}
                 </div>
               )}
             </li>

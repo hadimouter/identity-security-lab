@@ -1,7 +1,10 @@
 const STYLES: Record<string, string> = {
-  PENDING: "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  APPROVED: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  ACTIVE: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  PENDING:
+    "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  APPROVED:
+    "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+  ACTIVE:
+    "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   REJECTED: "border-border bg-foreground/5 text-muted",
   REVOKED: "border-border bg-foreground/5 text-muted",
 };

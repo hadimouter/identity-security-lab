@@ -1,15 +1,15 @@
-import { unauthorized } from "next/navigation";
-
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { RequestAccessForm } from "@/app/components/request-access-form";
 import { fetchRoles } from "@/lib/api";
 import { getEffectiveRoles } from "@/lib/session-roles";
 
 export default async function RequestAccessPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
-  const [roles, held] = await Promise.all([fetchRoles(), getEffectiveRoles()]);
+  const [roles, effective] = await Promise.all([
+    fetchRoles(),
+    getEffectiveRoles(),
+  ]);
 
   return (
     <div className="space-y-10">
@@ -26,7 +26,7 @@ export default async function RequestAccessPage() {
       {roles.ok ? (
         <RequestAccessForm
           roles={roles.data.roles}
-          heldRoles={held}
+          heldRoles={effective.roles}
         />
       ) : (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-5 text-sm">

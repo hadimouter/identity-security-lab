@@ -1,6 +1,6 @@
-import { forbidden, unauthorized } from "next/navigation";
+import { forbidden } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireFreshSession } from "@/lib/session";
 import { reviewRequest } from "@/app/actions/access";
 import { DecisionButtons } from "@/app/components/decision-buttons";
 import { StatusBadge } from "@/app/components/status-badge";
@@ -13,12 +13,11 @@ const dateFormat = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export default async function ManagerRequestsPage() {
-  const session = await auth();
-  if (!session) unauthorized();
+  await requireFreshSession();
 
   // Le contrôle qui fait autorité est dans l'API : elle renvoie 403 sur
   // la file d'approbation. Celui-ci évite d'afficher une page vide.
-  const roles = await getEffectiveRoles();
+  const { roles } = await getEffectiveRoles();
   if (!roles.includes("manager") && !roles.includes("admin")) forbidden();
 
   const result = await fetchPendingRequests();
