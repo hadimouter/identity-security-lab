@@ -75,7 +75,46 @@ POST /api/access-requests/:id/reject    access_request_rejected
 POST /api/grants/:id/revoke             access_grant_revoked
 refus de requireRole                    unauthorized_access_attempt
 refus pour séparation des tâches        unauthorized_access_attempt
+échec de vérification du jeton          unauthorized_access_attempt
 ```
+
+## Tentatives non authentifiées
+
+Un refus prononcé avant toute identification est journalisé avec `actorId` nul : aucune identité n'a été établie, et la déduire d'un jeton non vérifié n'aurait pas de sens.
+
+```json
+{
+  "action": "unauthorized_access_attempt",
+  "result": "denied",
+  "actorId": null,
+  "targetType": "route",
+  "targetId": "GET /api/users",
+  "metadata": {
+    "method": "GET",
+    "path": "/api/users",
+    "code": "algorithm_not_allowed",
+    "reason": "Algorithme de signature non autorisé. Seul RS256 est accepté.",
+    "ip": "::1",
+    "userAgent": "curl/8.7.1"
+  }
+}
+```
+
+Le champ `code` est stable et sert à filtrer ; `reason` est le message rendu à l'appelant.
+
+```txt
+missing_bearer_header    en-tête Authorization absent ou mal formé
+malformed_token          le jeton n'est pas un JWT exploitable
+token_expired            signature valide, mais exp dépassé
+invalid_signature        le jeton n'a pas été émis par Keycloak
+invalid_claim_iss        émis par un autre realm
+invalid_claim_aud        destiné à une autre application
+unknown_signing_key      aucune clé du JWKS ne correspond au kid
+algorithm_not_allowed    algorithme autre que RS256, dont alg=none
+missing_subject          jeton valide mais sans claim sub
+```
+
+**Ce qui n'est jamais enregistré** : le jeton, ni l'en-tête `Authorization`, même tronqué. Un journal d'audit se consulte largement ; y déposer un identifiant de connexion en ferait une cible. Le chemin est enregistré sans la chaîne de requête, qui pourrait transporter des valeurs à ne pas conserver.
 
 ## Exemple produit par le scénario de démonstration
 
@@ -92,3 +131,4 @@ succès   access_grant_revoked         manager   {"role":"manager","reason":"Fin
 
 - filtres et pagination sur la page de consultation
 - export du journal, pour une revue hors application
+- limitation de débit : une campagne de requêtes non authentifiées écrit une ligne par tentative, sans plafond
