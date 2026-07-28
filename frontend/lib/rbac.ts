@@ -51,6 +51,8 @@ export type ScreenStatus = "disponible" | "a-venir";
 export type Screen = {
   href: string;
   label: string;
+  /** Libellé court, pour la barre de navigation. */
+  navLabel: string;
   roles: Role[];
   status: ScreenStatus;
   phase?: string;
@@ -64,46 +66,49 @@ export const SCREENS: Screen[] = [
   {
     href: "/profile",
     label: "Profil et claims",
+    navLabel: "Profil",
     roles: ["user", "manager", "admin"],
     status: "disponible",
   },
   {
     href: "/admin",
     label: "Administration",
+    navLabel: "Admin",
     roles: ["admin"],
     status: "disponible",
   },
   {
     href: "/request-access",
     label: "Demander un accès",
+    navLabel: "Demander",
     roles: ["user", "manager", "admin"],
-    status: "a-venir",
-    phase: "phase 4",
+    status: "disponible",
   },
   {
     href: "/my-requests",
     label: "Mes demandes",
+    navLabel: "Mes demandes",
     roles: ["user", "manager", "admin"],
-    status: "a-venir",
-    phase: "phase 4",
+    status: "disponible",
   },
   {
     href: "/my-access",
     label: "Mes accès actifs",
+    navLabel: "Mes accès",
     roles: ["user", "manager", "admin"],
-    status: "a-venir",
-    phase: "phase 5",
+    status: "disponible",
   },
   {
     href: "/manager/requests",
     label: "Demandes à valider",
+    navLabel: "À valider",
     roles: ["manager", "admin"],
-    status: "a-venir",
-    phase: "phase 4",
+    status: "disponible",
   },
   {
     href: "/manager/grants",
     label: "Accès accordés",
+    navLabel: "Accès accordés",
     roles: ["manager", "admin"],
     status: "a-venir",
     phase: "phase 5",
@@ -111,9 +116,9 @@ export const SCREENS: Screen[] = [
   {
     href: "/manager/audit-logs",
     label: "Audit logs",
+    navLabel: "Audit",
     roles: ["manager", "admin"],
-    status: "a-venir",
-    phase: "phase 4",
+    status: "disponible",
   },
 ];
 

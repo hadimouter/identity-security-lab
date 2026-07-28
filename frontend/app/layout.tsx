@@ -36,7 +36,7 @@ async function Header() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-      <nav className="mx-auto flex h-16 max-w-3xl items-center gap-5 px-6">
+      <nav className="mx-auto flex min-h-16 max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-6 py-3">
         <Link
           href="/"
           className="-mx-1 rounded px-1 py-2 text-sm font-semibold tracking-tight transition-opacity hover:opacity-70"
@@ -46,14 +46,14 @@ async function Header() {
 
         {available.map((screen) => (
           <Link key={screen.href} href={screen.href} className={NAV_LINK}>
-            {screen.label === "Profil et claims" ? "Profil" : screen.label}
+            {screen.navLabel}
           </Link>
         ))}
 
         <div className="ml-auto flex items-center gap-4">
           {session ? (
             <>
-              <span className="hidden text-sm text-muted sm:inline">
+              <span className="hidden text-sm text-muted lg:inline">
                 {session.user?.email}
               </span>
               <form action={logout}>
@@ -97,7 +97,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="border-t border-border">
-          <div className="mx-auto max-w-3xl px-6 py-6 text-center text-xs text-muted">
+          <div className="mx-auto max-w-5xl px-6 py-6 text-center text-xs text-muted">
             Lab d&apos;apprentissage. Comptes et données de démonstration
             uniquement.
           </div>
