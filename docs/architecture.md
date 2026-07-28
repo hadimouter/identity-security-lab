@@ -108,6 +108,18 @@ Aucun rôle, aucun identifiant utilisateur et aucun statut envoyé par le client
 
 Le navigateur ne détient qu'un cookie de session. Il ne voit ni l'access token, ni les rôles qui font foi.
 
+## Exposition de l'API, et durcissement absent
+
+L'API n'est jointe que par le serveur Next.js, sur la boucle locale. Le navigateur ne l'appelle jamais : il parle au serveur Next.js, qui parle à l'API. Trois protections courantes sont donc absentes, volontairement, et il vaut mieux savoir dire pourquoi.
+
+**Pas de CORS.** Aucune requête ne vient d'une origine navigateur, il n'y a donc pas d'origine à autoriser. Sans en-têtes CORS, un script hébergé ailleurs ne peut de toute façon pas lire les réponses de l'API. L'exposer à un navigateur imposerait une liste blanche d'origines explicite, jamais `*`.
+
+**Pas de `helmet`.** Les en-têtes qu'il pose — `X-Frame-Options`, `X-Content-Type-Options`, `Content-Security-Policy` — protègent un document rendu dans un navigateur. L'API ne renvoie que du JSON, consommé par un serveur. C'est le frontend qui aurait besoin d'une CSP, et ce lab n'en définit pas non plus.
+
+**Pas de limitation de débit.** C'est la plus discutable des trois. Chaque requête non authentifiée écrit désormais une ligne d'audit : une campagne de sondes ferait enfler la table sans plafond. Une limitation par adresse sur les routes d'authentification serait le premier ajout d'une mise en production, avant même le TLS.
+
+Ce qui protège réellement l'API aujourd'hui : la validation du jeton à chaque requête, le contrôle de rôle serveur, et le fait qu'aucun jeton ne transite par le navigateur. Le durcissement réseau viendrait s'ajouter à cela, pas le remplacer.
+
 ## Objectif IAM
 
 1. authentification déléguée à un IdP via OIDC
