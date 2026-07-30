@@ -329,6 +329,15 @@ docs/access-review-reporting.md  revue d'accès et lecture du rapport
 docs/resources.md                standards et ressources
 ```
 
+Réseau utile IAM, le sous-ensemble sans lequel on ne peut pas expliquer pourquoi un SSO échoue :
+
+```txt
+docs/network-iam-notes.md            DNS, TLS, ports, firewall, proxy, LDAP, Kerberos
+docs/iam-network-flows.md            schémas des flux d'authentification
+docs/iam-network-troubleshooting.md  diagnostic d'un SSO qui ne marche pas
+docs/iam-ports-cheatsheet.md         ports et protocoles, fiche de référence
+```
+
 ## Module complémentaire : Microsoft Identity
 
 Le lab montre un accès en train d'être demandé, approuvé et révoqué. Il ne montre pas l'autre moitié du métier : ouvrir un annuaire qui tourne depuis cinq ans et y chercher ce qui a dérivé.
