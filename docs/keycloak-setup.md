@@ -197,17 +197,30 @@ Un seul rôle métier par compte. Tout accès supplémentaire doit passer par un
 
 ### 3.8 Vérifier la configuration
 
-Obtenir un token et lire ses claims, sans navigateur :
+Obtenir un token et lire ses claims, sans navigateur.
+
+Un JWT est encodé en base64**url** : une variante qui remplace `+` et `/` par `-` et `_`, et qui omet les `=` de rembourrage. Le `base64` de macOS ne connaît pas cette variante et renvoie une sortie tronquée. Cette fonction rétablit les deux, elle marche sur macOS comme sur Linux :
+
+```bash
+jwt() {
+  cut -d. -f"${2:-2}" <<< "$1" \
+    | jq -R 'gsub("-";"+") | gsub("_";"/") | . + ("=" * ((4 - (length % 4)) % 4)) | @base64d | fromjson'
+}
+```
 
 ```bash
 source .env
-curl -s -X POST "http://localhost:8080/realms/identity-lab/protocol/openid-connect/token" \
+TOKEN=$(curl -s -X POST "http://localhost:8080/realms/identity-lab/protocol/openid-connect/token" \
   -d "client_id=identity-lab-web" -d "client_secret=$KEYCLOAK_CLIENT_SECRET" \
   -d "username=manager" -d "password=$DEMO_MANAGER_PASSWORD" \
   -d "grant_type=password" -d "scope=openid profile email" \
-  | jq -r .access_token \
-  | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq
+  | jq -r .access_token)
+
+jwt "$TOKEN"        # la charge utile
+jwt "$TOKEN" 1      # l'en-tete : alg, typ, kid
 ```
+
+Décoder n'est pas vérifier : n'importe qui peut lire un JWT, c'est du base64, pas du chiffrement. Seule la signature prouve l'origine. Le détail est dans [iam-network-troubleshooting.md](iam-network-troubleshooting.md).
 
 Attendu dans la charge utile :
 
