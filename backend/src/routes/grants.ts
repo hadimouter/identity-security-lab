@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { AUDIT, writeAuditLog } from "../lib/audit.js";
+import { ConflictError } from "../lib/errors.js";
 import { prisma } from "../lib/prisma.js";
 import { authenticated } from "../middleware/authenticated.js";
 import { requireRole } from "../middleware/require-role.js";
@@ -71,6 +72,9 @@ grantsRouter.post(
       return;
     }
 
+    // Chemin rapide, pour un message clair dans le cas courant. La garde
+    // qui fait autorité est dans la transaction : entre cette lecture et
+    // l'écriture, un autre manager peut avoir révoqué l'accès.
     if (grant.status !== "ACTIVE") {
       res.status(409).json({
         error: "conflict",
@@ -84,13 +88,26 @@ grantsRouter.post(
       typeof req.body?.reason === "string" ? req.body.reason.trim() : null;
 
     const updated = await prisma.$transaction(async (tx) => {
-      const result = await tx.accessGrant.update({
-        where: { id: grant.id },
+      // Garde atomique : deux managers qui révoquent au même instant
+      // franchissent tous deux la lecture ci-dessus. Sans la condition
+      // sur le statut, le second écraserait revokedById et revokedAt, et
+      // écrirait une seconde trace pour une seule révocation — un
+      // journal comptant deux révocations là où il n'y en a eu qu'une.
+      const claimed = await tx.accessGrant.updateMany({
+        where: { id: grant.id, status: "ACTIVE" },
         data: {
           status: "REVOKED",
           revokedById: revoker.id,
           revokedAt: new Date(),
         },
+      });
+
+      if (claimed.count === 0) {
+        throw new ConflictError("Cet accès a déjà été révoqué.");
+      }
+
+      const result = await tx.accessGrant.findUniqueOrThrow({
+        where: { id: grant.id },
         select: GRANT_SHAPE,
       });
 

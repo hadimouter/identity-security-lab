@@ -85,6 +85,40 @@ Un JWT signé ne peut pas être révoqué avant son expiration. Le jeton ne port
 
 Détail dans [rbac-model.md](rbac-model.md).
 
+### Les invariants du workflow sont garantis par la base
+
+Trois règles ne doivent jamais être violées, quelle que soit la
+concurrence :
+
+```txt
+un seul acces ACTIVE par couple (utilisateur, role)
+une seule demande PENDING par couple (demandeur, role)
+une demande ne change de statut qu'une fois
+```
+
+Les vérifier dans le code ne suffit pas. Même à l'intérieur d'une
+transaction, une lecture suivie d'une écriture reste franchissable :
+sous le niveau d'isolation Read Committed de PostgreSQL, deux
+transactions concurrentes peuvent lire toutes les deux « rien ne
+s'y oppose » avant que l'une n'écrive.
+
+La garantie vit donc en base, à trois niveaux :
+
+- deux **index uniques partiels**, créés en SQL brut dans la migration
+  `20260730093000` — Prisma ne sait pas déclarer de clause `WHERE` sur un
+  index. Une violation remonte en `P2002`, que l'API traduit en 409 ;
+- des **mises à jour conditionnelles** : chaque transition de statut passe
+  par un `updateMany` filtré sur le statut attendu, et un compte de zéro
+  signifie qu'un autre est passé avant ;
+- un **conflit levé, jamais retourné**. Prisma valide une transaction dès
+  que son callback résout : retourner un objet de conflit après une
+  écriture conserverait cette écriture. Seule une exception — ici
+  `ConflictError` — provoque le rollback.
+
+Le troisième point est celui qui se trompe le plus facilement, parce que
+le code paraît correct : on répond bien 409, mais sur une base déjà
+modifiée.
+
 ### Docker Compose limité à l'infrastructure
 
 `docker compose up` démarre PostgreSQL et Keycloak, c'est-à-dire tout ce qui doit être identique d'une machine à l'autre : la base et le realm importé. Le frontend et l'API tournent en `npm run dev` sur l'hôte, pour garder le hot reload et des logs lisibles.

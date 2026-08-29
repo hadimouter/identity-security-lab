@@ -63,6 +63,10 @@ model AccessRequest {
 
   @@index([status])
   @@index([requesterId])
+
+  /// Invariant : une seule demande PENDING par couple (demandeur, rôle).
+  /// Même mécanisme que sur AccessGrant : index unique partiel créé dans
+  /// la migration 20260730093000.
 }
 
 /// Accès effectivement accordé. C'est la source des droits applicatifs.
@@ -86,6 +90,12 @@ model AccessGrant {
 
   /// Index sur le couple lu à chaque requête pour les droits effectifs.
   @@index([userId, status])
+
+  /// Invariant : un seul accès ACTIVE par couple (utilisateur, rôle).
+  /// Garanti par un index unique partiel créé en SQL brut dans la
+  /// migration 20260730093000, Prisma ne sachant pas déclarer de clause
+  /// WHERE sur un index. Ne pas régénérer ce schéma depuis la base :
+  /// `prisma db pull` ne sait pas relire cet index et le perdrait.
 }
 
 /// Trace d'une action sensible. Jamais modifiée ni supprimée.

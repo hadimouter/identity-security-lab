@@ -3,6 +3,7 @@ import { Router, type Response } from "express";
 import { AccessRequestStatus } from "../generated/prisma/client.js";
 
 import { AUDIT, writeAuditLog, writeAuditLogSafely } from "../lib/audit.js";
+import { ConflictError } from "../lib/errors.js";
 import { prisma } from "../lib/prisma.js";
 import { authenticated } from "../middleware/authenticated.js";
 import { requireRole } from "../middleware/require-role.js";
@@ -65,7 +66,9 @@ accessRequestsRouter.post("/access-requests", ...authenticated, async (req, res)
 
   const requester = req.localUser!;
 
-  // Demander un rôle déjà détenu n'a pas de sens et polluerait la file.
+  // Chemin rapide : le rôle est peut-être déjà porté par le jeton, ce
+  // qu'aucune lecture en base ne dirait. Les gardes qui font autorité
+  // sont dans la transaction ci-dessous.
   if (req.effectiveRoles!.all.includes(role.name)) {
     res.status(409).json({
       error: "conflict",
@@ -74,18 +77,27 @@ accessRequestsRouter.post("/access-requests", ...authenticated, async (req, res)
     return;
   }
 
-  const pending = await prisma.accessRequest.findFirst({
-    where: { requesterId: requester.id, roleId: role.id, status: "PENDING" },
-  });
-  if (pending) {
-    res.status(409).json({
-      error: "conflict",
-      message: `Une demande est déjà en attente pour le rôle ${role.name}.`,
-    });
-    return;
-  }
-
   const created = await prisma.$transaction(async (tx) => {
+    // Les deux gardes vivent dans la transaction. Hors d'elle, deux
+    // requêtes simultanées les franchiraient toutes les deux et
+    // créeraient deux demandes en attente pour le même rôle — ce qui
+    // ouvrirait ensuite une double approbation.
+    const activeGrant = await tx.accessGrant.findFirst({
+      where: { userId: requester.id, roleId: role.id, status: "ACTIVE" },
+    });
+    if (activeGrant) {
+      throw new ConflictError(`Vous disposez déjà du rôle ${role.name}.`);
+    }
+
+    const pending = await tx.accessRequest.findFirst({
+      where: { requesterId: requester.id, roleId: role.id, status: "PENDING" },
+    });
+    if (pending) {
+      throw new ConflictError(
+        `Une demande est déjà en attente pour le rôle ${role.name}.`,
+      );
+    }
+
     const request = await tx.accessRequest.create({
       data: { requesterId: requester.id, roleId: role.id, justification },
       select: REQUEST_SHAPE,
@@ -232,7 +244,7 @@ accessRequestsRouter.post(
       });
 
       if (claimed.count === 0) {
-        return { conflict: "Cette demande vient d'être traitée." } as const;
+        throw new ConflictError("Cette demande vient d'être traitée.");
       }
 
       // Même raisonnement pour l'accès : la vérification doit vivre dans
@@ -247,7 +259,11 @@ accessRequestsRouter.post(
       });
 
       if (existing) {
-        return { conflict: "Le demandeur dispose déjà de cet accès." } as const;
+        // Levé et non retourné : l'updateMany ci-dessus a déjà écrit.
+        // Un `return` validerait la transaction et laisserait la demande
+        // APPROVED, sans accès ni trace d'audit, et sans possibilité de
+        // la retraiter puisqu'elle ne serait plus PENDING.
+        throw new ConflictError("Le demandeur dispose déjà de cet accès.");
       }
 
       const updated = await tx.accessRequest.findUniqueOrThrow({
@@ -285,11 +301,6 @@ accessRequestsRouter.post(
       return { request: updated, grantId: grant.id };
     });
 
-    if ("conflict" in result) {
-      res.status(409).json({ error: "conflict", message: result.conflict });
-      return;
-    }
-
     res.json(result);
   },
 );
@@ -325,7 +336,7 @@ accessRequestsRouter.post(
       });
 
       if (claimed.count === 0) {
-        return { conflict: "Cette demande vient d'être traitée." } as const;
+        throw new ConflictError("Cette demande vient d'être traitée.");
       }
 
       const result = await tx.accessRequest.findUniqueOrThrow({
@@ -344,11 +355,6 @@ accessRequestsRouter.post(
 
       return result;
     });
-
-    if ("conflict" in updated) {
-      res.status(409).json({ error: "conflict", message: updated.conflict });
-      return;
-    }
 
     res.json(updated);
   },
