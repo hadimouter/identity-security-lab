@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Généré automatiquement par `next dev` à chaque démarrage.
+AGENTS.md
