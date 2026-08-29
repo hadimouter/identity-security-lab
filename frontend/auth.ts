@@ -20,8 +20,10 @@ const REFRESH_MARGIN_SECONDS = 30;
  * reste Authorization Code + PKCE : PKCE ne protège que l'échange du
  * code initial, il n'intervient pas dans un renouvellement.
  *
- * Le refresh token ne quitte jamais le serveur. Il vit uniquement dans
- * le JWT interne d'Auth.js, chiffré dans un cookie httpOnly.
+ * Le refresh token n'est jamais exposé au JavaScript du navigateur, ni
+ * renvoyé dans l'objet session. Il vit dans le JWT interne d'Auth.js,
+ * chiffré dans un cookie httpOnly — donc bien présent côté navigateur,
+ * mais illisible pour lui.
  */
 async function refreshAccessToken(token: JWT): Promise<JWT> {
   if (!token.refreshToken) {

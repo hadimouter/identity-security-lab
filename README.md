@@ -238,7 +238,7 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Authentification SSO via Keycloak, en Authorization Code + PKCE
 - Profil utilisateur, claims décodés et compte à rebours d'expiration du jeton
 - Renouvellement automatique de l'access token, avec écran dédié si la session SSO a expiré
-- Aucun jeton exposé au navigateur : ni l'access token ni le refresh token ne quittent le serveur
+- Aucun jeton exposé au JavaScript du navigateur : access token et refresh token restent dans le JWT interne d'Auth.js, chiffré dans un cookie `httpOnly`, et les appels à l'API partent du serveur
 - Tableau de bord annonçant ce que le rôle permet et les écrans qu'il ouvre
 - Pages 401, 403 et 404 en français, avec les bons statuts HTTP
 - Page d'erreur d'authentification expliquant chaque cas d'échec
@@ -249,7 +249,7 @@ Mots de passe locaux, définis dans `.env.example`. Usage de démonstration uniq
 - Demande d'accès justifiée, file d'approbation, approbation et refus commentés
 - Accès accordé rattaché à son approbateur, à sa justification et horodaté
 - Séparation des tâches : personne ne traite sa propre demande
-- Révocation immédiatement effective, sans changement de jeton
+- Révocation des accès accordés immédiatement effective, sans attendre l'expiration du jeton
 - Journal d'audit sur chaque action sensible, succès comme refus, réservé aux managers et admins
 - Inventaire des identités provisionnées, réservé à l'admin, avec leurs accès et qui les a décidés
 

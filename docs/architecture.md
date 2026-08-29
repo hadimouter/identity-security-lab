@@ -17,7 +17,7 @@ Navigateur → Next.js :3000 ─┘          └─ API Express :4000 → Postgr
 
 1. L'utilisateur ouvre l'application et clique sur « Se connecter ».
 2. Le frontend le redirige vers Keycloak, en Authorization Code + PKCE. Le mot de passe ne transite pas par l'application.
-3. Keycloak renvoie un code, que le frontend échange contre un ID token et un access token. Les jetons restent côté serveur, dans une session cookie `httpOnly`.
+3. Keycloak renvoie un code, que le frontend échange contre un ID token et un access token. Les jetons ne sont jamais exposés au JavaScript du navigateur : ils sont chiffrés dans un cookie de session `httpOnly`, que seul le serveur Next.js sait relire.
 4. Pour chaque action métier, le frontend appelle l'API avec `Authorization: Bearer <access_token>`.
 5. L'API valide le jeton avec les clés publiques du JWKS de Keycloak : signature RS256, `iss`, `aud`, `exp`. Elle en extrait `sub` et `realm_access.roles`.
 6. L'API calcule les rôles effectifs, applique le contrôle RBAC, exécute l'action et écrit un audit log.
