@@ -1,0 +1,19 @@
+# Dérogations Trivy — DATÉES et JUSTIFIÉES. Politique : docs/security.md.
+#
+# Trois règles, sans exception :
+#
+#   1. Une dérogation cible un identifiant précis, jamais un chemin ou une
+#      catégorie entière. On accepte un risque nommé, pas une zone d'ombre.
+#   2. Elle porte une date d'expiration. Passé ce jour, Trivy re-signale et le
+#      gate redevient bloquant : une exception non datée est une dette oubliée.
+#   3. Elle explique pourquoi le risque est acceptable ICI — non exploitable,
+#      chemin non atteint, correctif inexistant en amont. « Ça bloquait le
+#      pipeline » n'est pas une justification.
+#
+# Ce fichier est vide, et c'est voulu : les vulnérabilités rencontrées jusqu'ici
+# ont été corrigées, pas contournées. Les dix avis du 29/08/2026 ont été traités
+# par un bump de Next et un override sur deepmerge-ts.
+
+vulnerabilities: []
+misconfigurations: []
+secrets: []

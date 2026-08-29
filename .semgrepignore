@@ -1,0 +1,16 @@
+# Périmètre SAST = le code écrit dans ce dépôt.
+#
+# Tout ce qui suit est généré ou installé, pas rédigé ici. Le signaler
+# noierait les vraies trouvailles sous du bruit qu'on ne peut pas corriger
+# autrement qu'en changeant de dépendance.
+
+node_modules/
+.next/
+dist/
+
+# Client Prisma : généré à partir de prisma/schema.prisma par `prisma generate`,
+# et volontairement non versionné.
+backend/src/generated/
+
+# Sorties des scripts d'inspection d'annuaire, régénérées à chaque exécution.
+scripts/microsoft-identity/output/

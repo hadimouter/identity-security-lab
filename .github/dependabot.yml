@@ -1,0 +1,81 @@
+version: 2
+
+updates:
+  # ── Dépendances applicatives ────────────────────────────────────────────────
+  # Deux projets indépendants, deux lockfiles : il n'y a pas de workspace ici.
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    # Délai avant de proposer une version fraîchement publiée. Un paquet
+    # compromis — maintainer piraté, publication malveillante — est le plus
+    # souvent repéré dans les jours qui suivent sa mise en ligne. Attendre,
+    # c'est laisser la communauté faire ce tri à notre place.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      prisma:
+        patterns:
+          - prisma
+          - '@prisma/*'
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    # Délai avant de proposer une version fraîchement publiée. Un paquet
+    # compromis — maintainer piraté, publication malveillante — est le plus
+    # souvent repéré dans les jours qui suivent sa mise en ligne. Attendre,
+    # c'est laisser la communauté faire ce tri à notre place.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    groups:
+      # Next et son plugin ESLint doivent bouger ensemble, sous peine de lint
+      # cassé pour une raison sans rapport avec le code.
+      next:
+        patterns:
+          - next
+          - eslint-config-next
+      react:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react*'
+
+  # ── Actions du pipeline ─────────────────────────────────────────────────────
+  # Elles sont épinglées par SHA de commit, pour qu'un tag ne puisse pas être
+  # repointé silencieusement. Le revers est qu'un SHA figé devient une dette :
+  # c'est Dependabot qui la rembourse, en proposant le SHA suivant.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Délai avant de proposer une version fraîchement publiée. Un paquet
+    # compromis — maintainer piraté, publication malveillante — est le plus
+    # souvent repéré dans les jours qui suivent sa mise en ligne. Attendre,
+    # c'est laisser la communauté faire ce tri à notre place.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+
+  # ── Images d'infrastructure ─────────────────────────────────────────────────
+  # postgres et keycloak, déclarées dans docker-compose.yml. Leurs CVE ne sont
+  # pas corrigeables ici et ne bloquent donc pas le pipeline : le seul levier
+  # est de suivre les versions, ce que fait cette entrée.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    # Délai avant de proposer une version fraîchement publiée. Un paquet
+    # compromis — maintainer piraté, publication malveillante — est le plus
+    # souvent repéré dans les jours qui suivent sa mise en ligne. Attendre,
+    # c'est laisser la communauté faire ce tri à notre place.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5

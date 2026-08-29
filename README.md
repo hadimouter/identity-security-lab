@@ -192,6 +192,27 @@ Prérequis : `docker compose up -d` et les migrations appliquées. Sans ça, les
 
 Ils écrivent dans la base de développement et nettoient derrière eux. Ils retirent aussi, avant chaque test, les demandes en attente et les accès actifs du compte `user@example.com`, qui bloqueraient une création. Pour repartir d'une démonstration vierge : `npx prisma migrate reset --force && npx prisma db seed`.
 
+## Intégration continue
+
+Chaîne shift-left sur chaque push et chaque pull request, dans [.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+```txt
+sast          Semgrep, image epinglee, rulesets typescript / nodejs / owasp-top-ten
+secrets       Trufflehog sur tout l'historique git, secrets verifies uniquement
+sca           npm audit sur les deux projets, seuil moderate
+supply-chain  Trivy fs : dependances, secrets, erreurs de configuration
+quality       typecheck backend et tests, lint et build de production frontend
+scripts       les cinq scripts Python, avec verification du nombre de lignes produites
+integration   les huit tests, contre PostgreSQL et Keycloak demarres par docker compose
+sbom          inventaire CycloneDX, produit seulement si tout le reste est vert
+```
+
+**Chaque contrôle bloque.** Aucun `|| true`, aucun `continue-on-error` sur un gate : un scanner dont on ignore le résultat ne protège de rien. Le corollaire est qu'on ne branche un gate qu'après avoir corrigé ce qu'il trouve — les dix vulnérabilités des lockfiles ont donc été soldées avant, et les deux projets sont à zéro, tous niveaux confondus.
+
+Les actions sont épinglées par SHA de commit, un tag pouvant être repointé silencieusement. Dependabot suit les dépendances, les actions et les images d'infrastructure.
+
+Le raisonnement derrière chaque contrôle, la politique de dérogation, et ce que la CI ne vérifie pas volontairement : [docs/security.md](docs/security.md).
+
 ## Configuration Keycloak
 
 Le realm est versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage. Aucune configuration manuelle n'est nécessaire pour utiliser le lab.
@@ -355,6 +376,7 @@ docs/audit-logs.md               événements d'audit et format
 docs/demo-script.md              déroulé de démonstration en douze étapes
 docs/microsoft-identity-notes.md AD, Entra ID, PIM, Access Reviews, Graph
 docs/access-review-reporting.md  revue d'accès et lecture du rapport
+docs/security.md                 politique de sécurité de la chaîne de build
 docs/resources.md                standards et ressources
 ```
 

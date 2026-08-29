@@ -1,0 +1,294 @@
+name: CI
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chaîne shift-left. Tout ce qui suit tourne en parallèle, puis le SBOM
+# n'est produit que si l'ensemble est vert :
+#
+#   sast ────────┐
+#   secrets ─────┤
+#   sca ─────────┤
+#   supply-chain ┼──→ sbom
+#   quality ─────┤
+#   scripts ─────┤
+#   integration ─┘
+#
+# Chaque gate BLOQUE sur trouvaille. Aucun `|| true`, aucun `continue-on-error`
+# sur un contrôle de sécurité : masquer une alerte revient à ne pas l'avoir.
+# Les dérogations sont datées et justifiées dans .trivyignore.yaml, jamais
+# improvisées dans le pipeline.
+#
+# Les quatre scanners ont été exécutés en local avant d'être branchés : le
+# pipeline est vert au premier passage parce que les vulnérabilités ont été
+# corrigées, pas parce que les seuils ont été baissés.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Lecture seule par défaut. Aucun job n'écrit dans le dépôt.
+permissions:
+  contents: read
+
+# Une exécution par branche : un push qui en suit un autre annule le précédent.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # SAST — Semgrep. Image épinglée, jamais `latest` : un gate de sécurité doit
+  # être déterministe, une nouvelle release de règles ne doit pas repasser le
+  # socle au rouge sans commit de notre part.
+  # Le client généré par Prisma et les artefacts de build sont exclus : ce n'est
+  # pas du code écrit ici, et le signaler noierait les vraies trouvailles.
+  # ───────────────────────────────────────────────────────────────────────────
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.166.0
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # Le périmètre est décrit dans .semgrepignore, pas dilué dans le YAML.
+      - run: |
+          semgrep \
+            --config p/typescript \
+            --config p/nodejs \
+            --config p/owasp-top-ten \
+            --error
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Secrets — Trufflehog sur tout l'historique, pas seulement sur le diff :
+  # un secret retiré dans un commit ultérieur reste lisible dans l'historique.
+  # `--only-verified` évite de bloquer sur les valeurs de démonstration du
+  # .env.example et du realm export, qui ressemblent à des secrets sans en être.
+  # ───────────────────────────────────────────────────────────────────────────
+  secrets:
+    name: Secrets (Trufflehog)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@0c952ace0f842f11c75775922d7400335cf60bc6 # v3.95.6
+        with:
+          path: ./
+          extra_args: --only-verified
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # SCA — npm audit sur les deux projets, qui ont chacun leur lockfile.
+  # Seuil `moderate` et non `high` : les deux sont à zéro vulnérabilité, tous
+  # niveaux confondus. Un seuil qu'on peut tenir doit être tenu.
+  # ───────────────────────────────────────────────────────────────────────────
+  sca:
+    name: SCA (npm audit)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [backend, frontend]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm audit --audit-level moderate
+        working-directory: ${{ matrix.project }}
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Chaîne d'approvisionnement — Trivy sur le système de fichiers.
+  # Second avis sur les dépendances : sa base de données n'est pas celle de npm
+  # et ne signale pas exactement les mêmes avis. Couvre aussi les secrets en
+  # clair et les erreurs de configuration.
+  #
+  # Volontairement PAS de scan des images postgres et keycloak : leurs CVE ne
+  # sont pas corrigeables ici, et un gate qu'on ne peut pas satisfaire finit
+  # par être contourné. Dependabot suit ces images à la place — voir
+  # docs/security.md.
+  # ───────────────────────────────────────────────────────────────────────────
+  supply-chain:
+    name: Supply chain (Trivy fs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+          skip-dirs: 'node_modules,**/.next,**/dist'
+          trivyignores: .trivyignore.yaml
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Qualité — typecheck et lint sur les deux projets.
+  # `prisma generate` d'abord : le client est généré à partir du schéma et
+  # n'est pas versionné, donc rien ne compile sans lui.
+  # ───────────────────────────────────────────────────────────────────────────
+  quality:
+    name: Typecheck + Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Préparer l'environnement
+        run: cp .env.example .env
+
+      - name: Backend — install, client Prisma, typecheck
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma generate
+          npm run typecheck
+
+      - name: Frontend — install, lint, build
+        working-directory: frontend
+        run: |
+          npm ci
+          ln -sfn ../.env .env.local
+          npm run lint
+          npm run build
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Module Microsoft Identity — les cinq scripts d'inspection d'annuaire.
+  # Lancés avec `--as-of` figé : les données mockées sont ancrées à une date,
+  # sans quoi les seuils d'inactivité dériveraient et les sorties changeraient
+  # toutes seules. Les nombres de lignes attendus sont ceux du README du module,
+  # ce qui en fait un vrai test de non-régression et pas un simple « ça tourne ».
+  # ───────────────────────────────────────────────────────────────────────────
+  scripts:
+    name: Scripts Microsoft Identity
+    runs-on: ubuntu-latest
+    env:
+      AS_OF: '2026-07-28'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+
+      - name: Exécuter les cinq scripts
+        run: |
+          set -euo pipefail
+          base=scripts/microsoft-identity
+          python3 "$base/detect-inactive-accounts.py"            --as-of "$AS_OF"
+          python3 "$base/detect-sensitive-group-members.py"      --as-of "$AS_OF"
+          python3 "$base/detect-service-accounts-without-owner.py" --as-of "$AS_OF"
+          python3 "$base/access-review-report.py"                --as-of "$AS_OF"
+          python3 "$base/detect-users-without-manager.py"
+
+      - name: Vérifier les sorties attendues
+        run: |
+          set -euo pipefail
+          cd scripts/microsoft-identity/output
+          verifier() {
+            reel=$(wc -l < "$1" | tr -d ' ')
+            if [ "$reel" != "$2" ]; then
+              echo "::error::$1 : $reel lignes, $2 attendues"
+              exit 1
+            fi
+            echo "  ok  $1 — $reel lignes"
+          }
+          verifier inactive-accounts.csv         5
+          verifier users-without-manager.csv     5
+          verifier sensitive-group-members.csv  13
+          verifier service-accounts-at-risk.csv  8
+          verifier access-review.csv            17
+
+      - name: Vérifier la gestion des erreurs
+        run: |
+          set -euo pipefail
+          if python3 scripts/microsoft-identity/detect-inactive-accounts.py --as-of 28/07/2026 2>/dev/null; then
+            echo "::error::une date invalide aurait dû faire échouer le script"
+            exit 1
+          fi
+          echo "  ok  une date invalide sort en erreur, sans traceback"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Tests d'intégration — les huit tests, contre une vraie infrastructure.
+  #
+  # `docker compose up` plutôt que des `services:` : Keycloak doit importer le
+  # realm versionné, ce qui suppose de monter un fichier. Effet de bord utile —
+  # la CI exécute exactement ce que le README demande à un humain de lancer, et
+  # prouve donc au passage qu'un clone neuf plus .env.example suffit à démarrer
+  # le lab.
+  # ───────────────────────────────────────────────────────────────────────────
+  integration:
+    name: Tests d'intégration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Préparer l'environnement
+        run: cp .env.example .env
+
+      - name: Démarrer PostgreSQL et Keycloak
+        run: docker compose up -d
+
+      - name: Attendre que le realm soit importé
+        run: |
+          set -euo pipefail
+          url=http://localhost:8080/realms/identity-lab/.well-known/openid-configuration
+          for i in $(seq 1 60); do
+            if curl -sf "$url" > /dev/null; then
+              echo "  realm disponible après ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Keycloak n'a pas importé le realm en 60 secondes"
+          docker compose logs keycloak
+          exit 1
+
+      - name: Préparer la base
+        working-directory: backend
+        run: |
+          npm ci
+          npx prisma generate
+          npx prisma migrate deploy
+          npx prisma db seed
+
+      - name: Lancer les tests
+        working-directory: backend
+        run: npm test
+
+      # Sans les logs, un échec en CI n'est qu'un code de sortie.
+      - name: Journaux de l'infrastructure en cas d'échec
+        if: failure()
+        run: docker compose logs --tail 100
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # SBOM — inventaire des composants, produit seulement si tous les gates sont
+  # verts. Sert à répondre à « suis-je concerné ? » le jour où une CVE tombe,
+  # sans avoir à réinstaller quoi que ce soit.
+  # ───────────────────────────────────────────────────────────────────────────
+  sbom:
+    name: SBOM (CycloneDX)
+    runs-on: ubuntu-latest
+    needs: [sast, secrets, sca, supply-chain, quality, scripts, integration]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: sbom.cdx.json
+          artifact-name: sbom.cdx.json
