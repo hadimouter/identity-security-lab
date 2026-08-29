@@ -163,6 +163,35 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:4000/api/admin/summar
 
 Doit renvoyer un 403 avec le rôle requis et les rôles détenus. Sans en-tête `Authorization`, la même route renvoie 401.
 
+## Tests
+
+```bash
+cd backend
+npm test
+```
+
+Huit tests d'intégration, sur le runner intégré de Node — aucune dépendance ajoutée. Ils démarrent l'API eux-mêmes sur un port libre et l'appellent en HTTP avec de **vrais jetons émis par Keycloak** : signature RS256, issuer et audience sont réellement vérifiés. Rien n'est simulé, sinon la propriété qui fait l'intérêt du lab ne serait plus testée.
+
+```txt
+Cycle de vie d'un acces
+  refuse, accorde puis retire un acces, sans jamais changer de jeton
+  laisse une trace d'audit pour chaque etape qui modifie des droits
+  refuse a chacun ce que son role ne permet pas
+  empeche un manager d'approuver sa propre demande
+
+Invariants sous concurrence
+  A. deux creations simultanees ne laissent qu'une demande en attente
+  B. deux approbations simultanees ne creent qu'un acces et qu'une trace
+  C. un conflit detecte apres une ecriture annule toute la transaction
+  D. deux revocations simultanees n'ecrivent qu'une trace
+```
+
+Les tests de concurrence lancent deux requêtes simultanées sur la même ressource. Ce qui compte n'est pas le code de réponse mais **l'état de la base après la course** : un seul accès, une seule trace, jamais de demande approuvée sans accès.
+
+Prérequis : `docker compose up -d` et les migrations appliquées. Sans ça, les tests s'arrêtent sur un message qui dit quoi lancer, plutôt que d'échouer en cascade.
+
+Ils écrivent dans la base de développement et nettoient derrière eux. Ils retirent aussi, avant chaque test, les demandes en attente et les accès actifs du compte `user@example.com`, qui bloqueraient une création. Pour repartir d'une démonstration vierge : `npx prisma migrate reset --force && npx prisma db seed`.
+
 ## Configuration Keycloak
 
 Le realm est versionné dans `keycloak/realm-export.json` et réimporté à chaque démarrage. Aucune configuration manuelle n'est nécessaire pour utiliser le lab.
@@ -369,7 +398,7 @@ Python standard, aucune dépendance. Données mockées : pas de tenant Entra ID 
 - Les pages 401 et 403 reposent sur `forbidden()` et `unauthorized()`, activés par le drapeau expérimental `authInterrupts` de Next.js. Ce sont les seules API qui rendent le bon statut HTTP, mais leur forme peut évoluer.
 - Le contrôle de rôle sur `/admin` est appliqué au rendu de la page, donc côté serveur, mais il ne protège que l'affichage : il évite de rendre un écran vide et des liens inutilisables. L'autorisation qui fait autorité est celle de l'API, qui revérifie le jeton et recalcule les droits à chaque requête.
 - Pas de déploiement, le lab tourne en local uniquement.
-- Pas de tests automatisés dans le périmètre du MVP.
+- Les tests couvrent le workflow d'accès et ses invariants de concurrence, pas le frontend ni les scripts Python. Pas de tests unitaires, pas de CI.
 
 ## Améliorations envisagées
 
@@ -382,7 +411,7 @@ Python standard, aucune dépendance. Données mockées : pas de tenant Entra ID 
 - Inventaire des identités non humaines : comptes de service, clés d'API
 - Notifications par email sur les demandes et approbations
 - Politiques d'autorisation en policy-as-code
-- Tests automatisés et contrôles de sécurité en CI/CD
+- Exécution des tests et contrôles de sécurité en CI/CD
 
 ## Licence et usage
 

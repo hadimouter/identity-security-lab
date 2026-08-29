@@ -119,6 +119,11 @@ Le troisième point est celui qui se trompe le plus facilement, parce que
 le code paraît correct : on répond bien 409, mais sur une base déjà
 modifiée.
 
+Ces trois garanties sont vérifiées par `npm test` dans `backend/` : quatre
+tests lancent deux requêtes simultanées sur la même ressource et
+contrôlent l'état de la base après la course. C'est ce qui les fait
+passer d'affirmations à propriétés.
+
 ### Docker Compose limité à l'infrastructure
 
 `docker compose up` démarre PostgreSQL et Keycloak, c'est-à-dire tout ce qui doit être identique d'une machine à l'autre : la base et le realm importé. Le frontend et l'API tournent en `npm run dev` sur l'hôte, pour garder le hot reload et des logs lisibles.
